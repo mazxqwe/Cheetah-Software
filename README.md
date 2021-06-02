@@ -68,7 +68,7 @@ mkdir mc-build
 cd mc-build
 cmake .. -DMINI_CHEETAH_BUILD=TRUE -DNO_SIM=ON
 ./../scripts/make_types.sh
-make -j4
+make
 ```
 
 This build process builds the common library, robot code, and NO simulator. If you just change robot code, you can simply run `make -j4` again. If you change LCM types, you'll need to run `cmake ..; make -j4`. This automatically runs `make_types.sh`.
@@ -87,7 +87,7 @@ Part of this build process will automatically download the gtest software testin
 1. ssh into robot
 2. `cd mc-build`
 3. Copy program to mini cheetah root dir with `../scripts/copy_to_mini_cheetah.sh`
-4. Enter the robot program folder `cd robot-software-....`
+4. Enter the robot program folder `cd robot-software-..../build/`
 5. Run robot code `./run_mc.sh` 
 
 
