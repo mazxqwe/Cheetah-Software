@@ -19,3 +19,5 @@ cp -r ../config robot-software
 
 DATE=$(date +"%Y%m%d%H%M")
 cp -r robot-software /home/roman/robot-software-$DATE/
+
+
