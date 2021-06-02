@@ -17,7 +17,7 @@ set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 option(MINI_CHEETAH_BUILD "use compiler flags for mini cheetah computer" OFF)
 set(BUILD_TYPE_RELEASE TRUE)
 
-option(NO_SIM "Do not build simulator" ON)
+option(NO_SIM "Do not build simulator" OFF)
 
 if(MINI_CHEETAH_BUILD)
   SET (THIS_COM "../" )
@@ -60,7 +60,8 @@ add_subdirectory(third-party)
 add_subdirectory(common)
 
 if(NO_SIM)
-  message("NO SIM OPTION IS ON")
+    message("NO SIM OPTION IS ON")
+
 else(NO_SIM)
   add_subdirectory(sim)
 endif()
