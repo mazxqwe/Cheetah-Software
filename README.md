@@ -52,11 +52,21 @@ Example)
 s: simulation, r: robot
 
 ## Build on robot
+
+Install all dependecies first 
+
+- LCM - https://lcm-proj.github.io/ (Please make it sure that you have a java to let lcm compile java-extension together)
+- Eigen - http://eigen.tuxfamily.org (Should be build from source not apt install)
+- `mesa-common-dev`
+- `freeglut3-dev`
+- `libblas-dev liblapack-dev`
+- `openjdk-8-jdk`
+
 To build all code:
 ```
 mkdir mc-build
 cd mc-build
-cmake .. -DMINI_CHEETAH_BUILD=TRUE -NO_SIM=ON
+cmake .. -DMINI_CHEETAH_BUILD=TRUE -DNO_SIM=ON
 ./../scripts/make_types.sh
 make -j4
 ```
