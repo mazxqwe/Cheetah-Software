@@ -83,6 +83,12 @@ Part of this build process will automatically download the gtest software testin
 [  PASSED  ] 18 tests.
 ```
 
+Its possiblly need to run 
+`
+sudo ldconfig -v
+`
+to add lcm to paths
+
 ## Run Mini cheetah
 1. ssh into robot
 2. `cd mc-build`
