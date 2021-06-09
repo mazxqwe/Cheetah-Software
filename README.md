@@ -46,7 +46,7 @@ To run the simulator:
 ```
 Example)
 ```
-./user/JPos_Controller/jpos_ctrl 3 s
+./user/MIT_Controller/mit_ctrl m s
 ```
 3: Cheetah 3, m: Mini Cheetah
 s: simulation, r: robot
