@@ -46,7 +46,7 @@ To run the simulator:
 ```
 Example)
 ```
-./user/JPos_Controller/jpos_ctrl 3 s
+./user/MIT_Controller/mit_ctrl m s
 ```
 3: Cheetah 3, m: Mini Cheetah
 s: simulation, r: robot
@@ -82,6 +82,12 @@ Part of this build process will automatically download the gtest software testin
 [==========] 18 tests from 3 test cases ran. (0 ms total)
 [  PASSED  ] 18 tests.
 ```
+
+Its possiblly need to run 
+`
+sudo ldconfig -v
+`
+to add lcm to paths
 
 ## Run Mini cheetah
 1. ssh into robot
