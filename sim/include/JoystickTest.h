@@ -7,6 +7,7 @@
 #include "GameController.h"
 */
 
+
 /*
 namespace Ui {
   class JoystickTestWindow;
@@ -30,5 +31,7 @@ private slots:
 };
 
 */
+void buttonClicked();
+//int ne_main(int argc, char **argv);
 
 #endif // JOYSTICK_TEST_H

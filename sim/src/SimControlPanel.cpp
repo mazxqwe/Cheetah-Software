@@ -500,6 +500,8 @@ void SimControlPanel::loadUserParameters(ControlParameters& params) {
 
 void SimControlPanel::on_joystickButton_clicked() {
   std::cout<<"Button_clicked"<<std::endl;
+  JOYSTICK_TEST_H::buttonClicked();
+  
   /*
   if(isRunning()) {
     _graphicsWindow->resetGameController();

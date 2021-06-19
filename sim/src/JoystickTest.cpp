@@ -1,4 +1,4 @@
-//#include "../include/JoystickTest.h"
+#include "../include/JoystickTest.h"
 //#include "ui_JoystickTest.h"
 //#include <QTimer>
 #include "ros/ros.h"
@@ -6,10 +6,11 @@
 
 #include <sstream>
 
-int ne_main(int argc, char **argv)
+void ne_main()
 {
-
-  ros::init(argc, argv, "talker");
+  int a = 0;
+  char * b =nullptr;
+  ros::init(a, &b, "talker");
 
 
   ros::NodeHandle n;
@@ -17,31 +18,31 @@ int ne_main(int argc, char **argv)
   
   ros::Publisher chatter_pub = n.advertise<std_msgs::String>("chatter", 1000);
 
-  ros::Rate loop_rate(10);
+  ros::Rate time_out(10);
 
 
-  int count = 0;
-  while (ros::ok())
-  {
-    std_msgs::String msg;
+  std_msgs::String msg;
 
-    std::stringstream ss;
-    ss << "hello world " << count;
-    msg.data = ss.str();
+  std::stringstream ss;
+  ss << "PREVED VoltBratushki from MIT";
+  msg.data = ss.str();
 
-    ROS_INFO("%s", msg.data.c_str());
+  ROS_INFO("%s", msg.data.c_str());
 
-    chatter_pub.publish(msg);
+  time_out.sleep();
 
-    ros::spinOnce();
+  chatter_pub.publish(msg);
 
-    loop_rate.sleep();
-    ++count;
-  }
+  time_out.sleep();
 
-  return 0;
+  ros::spinOnce();
 }
 
+void buttonClicked()
+{
+  std::cout<<"EXECUTING HERE"<<std::endl;
+  ne_main();
+}
 
 
 

@@ -24,6 +24,7 @@
         "numeric": "cpp",
         "core": "cpp",
         "matrixfunctions": "cpp",
-        "iosfwd": "cpp"
+        "iosfwd": "cpp",
+        "string": "cpp"
     }
 }
