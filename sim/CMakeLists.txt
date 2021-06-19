@@ -5,7 +5,8 @@ SET(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 
 execute_process(COMMAND ${CMAKE_SOURCE_DIR}/scripts/find_qt_path.sh OUTPUT_VARIABLE CMAKE_PREFIX_PATH_1)
-SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH_1})
+list(APPEND CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH_1})
+#list(APPEND CMAKE_PREFIX_PATH "/opt/ros/noetic")
 # message("CMAKE_PREFIX_PATH: ${CMAKE_PREFIX_PATH}")
 
 if(POLICY CMP0071)
@@ -39,7 +40,11 @@ include_directories("../lcm-types/cpp")
 include_directories("/usr/local/include/lcm/")   # lcm includes
 include_directories("../third-party/ParamHandler")
 include_directories(${CMAKE_BINARY_DIR})
+include_directories(${roscpp_INCLUDE_DIRS})
+include_directories(${std_msgs_INCLUDE_DIRS})
+
 file(GLOB sources "src/*.cpp")
+
 
 find_package(Qt5Core COMPONENTS QtGamepad REQUIRED)
 find_package(Qt5Gamepad REQUIRED)
@@ -49,9 +54,23 @@ set(OpenGL_GL_PREFERENCE LEGACY)
 find_package(OpenGL REQUIRED)
 include_directories(${OPENGL_INCLUDE_DIR})
 
+find_package(roscpp REQUIRED)
+find_package(std_msgs REQUIRED)
+
+include_directories(${roscpp_INCLUDE_DIRS})
+include_directories(${std_msgs_INCLUDE_DIRS})
+
+
+
+
 add_executable(sim ${sources} ${tst_hdr_moc})
 target_link_libraries(sim biomimetics pthread lcm inih dynacore_param_handler 
-    Qt5::Widgets Qt5::Core Qt5::Gui Qt5::Gamepad ${QT_LIBRARIES} ${OPENGL_LIBRARIES})
+    Qt5::Widgets Qt5::Core Qt5::Gui Qt5::Gamepad ${QT_LIBRARIES} ${OPENGL_LIBRARIES} ${roscpp_LIBRARIES} ${std_msgs_LIBRARIES})
+
+
+#add_library(Joysticktest src/JoystickTest.cpp)
+#target_link_libraries(Joysticktest ${roscpp_LIBRARIES} ${std_msgs_LIBRARIES})
+
 
 if (CMAKE_SYSTEM_NAME MATCHES Linux)
   target_link_libraries(sim rt ${GLUT_glut_LIBRARIES})
@@ -62,4 +81,4 @@ if (APPLE)
   target_link_libraries(sim "-framework GLUT")
 endif (APPLE)
 
-
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -Wall -Werror -Wextra")

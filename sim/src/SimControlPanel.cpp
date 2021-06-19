@@ -497,13 +497,17 @@ void SimControlPanel::loadUserParameters(ControlParameters& params) {
 /*!
  * Attempt to reset the joystick if a new one is connected
  */
+
 void SimControlPanel::on_joystickButton_clicked() {
+  std::cout<<"Button_clicked"<<std::endl;
+  /*
   if(isRunning()) {
     _graphicsWindow->resetGameController();
     JoystickTestWindow* window = new JoystickTestWindow(_graphicsWindow->getGameController());
     window->exec();
     delete window;
   }
+  */
 }
 
 void SimControlPanel::on_driverButton_clicked() {

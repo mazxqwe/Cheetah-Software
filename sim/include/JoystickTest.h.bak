@@ -1,13 +1,10 @@
 #ifndef JOYSTICK_TEST_H
 #define JOYSTICK_TEST_H
 
-/*
 #include <QDialog>
 #include <SimUtilities/GamepadCommand.h>
 #include "GameController.h"
-*/
 
-/*
 namespace Ui {
   class JoystickTestWindow;
 }
@@ -28,7 +25,5 @@ private:
 private slots:
   void update();
 };
-
-*/
 
 #endif // JOYSTICK_TEST_H

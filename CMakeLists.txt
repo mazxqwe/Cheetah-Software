@@ -17,7 +17,7 @@ set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 option(MINI_CHEETAH_BUILD "use compiler flags for mini cheetah computer" OFF)
 set(BUILD_TYPE_RELEASE TRUE)
 
-option(NO_SIM "Do not build simulator" ON)
+option(NO_SIM "Do not build simulator" OFF)
 
 if(MINI_CHEETAH_BUILD)
   SET (THIS_COM "../" )
@@ -38,7 +38,7 @@ else(MINI_CHEETAH_BUILD)
     set(CMAKE_CXX_FLAGS "-O3 -no-pie -march=native -ggdb -Wall \
     -Wextra -Wcast-align -Wdisabled-optimization -Wformat=2 \
     -Winit-self -Wmissing-include-dirs -Woverloaded-virtual \
-    -Wshadow -Wsign-promo -Werror")
+    -Wno-shadow -Wsign-promo -Werror")
   elseif(APPLE)
     set(CMAKE_CXX_FLAGS "-O3 -march=native -ggdb -Wall \
     -Wextra -Wcast-align -Wdisabled-optimization -Wformat=2 \
