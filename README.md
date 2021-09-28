@@ -56,12 +56,13 @@ s: simulation, r: robot
 Install all dependecies first 
 
 - `sudo apt --fix-broken install`
+- `openjdk-8-jdk`
 - LCM - https://lcm-proj.github.io/ (Please make it sure that you have a java to let lcm compile java-extension together)
 - Eigen - http://eigen.tuxfamily.org (Should be build from source not apt install)
 - `mesa-common-dev`
 - `freeglut3-dev`
 - `libblas-dev liblapack-dev`
-- `openjdk-8-jdk`
+
 
 To build all code:
 ```
