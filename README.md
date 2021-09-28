@@ -71,6 +71,7 @@ cd mc-build
 cmake .. -DMINI_CHEETAH_BUILD=TRUE -DNO_SIM=ON
 ./../scripts/make_types.sh
 make
+sudo ldconfig -v
 ```
 
 This build process builds the common library, robot code, and NO simulator. If you just change robot code, you can simply run `make -j4` again. If you change LCM types, you'll need to run `cmake ..; make -j4`. This automatically runs `make_types.sh`.
