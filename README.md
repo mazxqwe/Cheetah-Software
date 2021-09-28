@@ -55,6 +55,7 @@ s: simulation, r: robot
 
 Install all dependecies first 
 
+- `sudo apt --fix-broken install`
 - LCM - https://lcm-proj.github.io/ (Please make it sure that you have a java to let lcm compile java-extension together)
 - Eigen - http://eigen.tuxfamily.org (Should be build from source not apt install)
 - `mesa-common-dev`
