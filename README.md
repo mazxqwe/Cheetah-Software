@@ -7,7 +7,7 @@ The robot folder will contain the robot program
 The sim folder will contain the simulation program. It is the only program which depends on QT.
 The third-party will contain *small* third party libraries that we have modified. This should just be libsoem for Cheetah 3, which Pat modified at one point.
 
-## Dependecies
+## Dependencies
 
 - ROS Noetic Ninjemys
 - Qt 5.10 - https://www.qt.io/download-qt-installer (tested on 5.12.2 - works fine)
@@ -98,6 +98,6 @@ to add lcm to paths
 
 To use Ipopt, use CMake Ipopt option. Ex) cmake -DIPOPT_OPTION=ON ..
 
-##TODO
+## TODO
 
 ROS currently added semi correct, should be fixed this workaround further...
