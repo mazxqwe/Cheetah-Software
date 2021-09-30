@@ -1,3 +1,9 @@
+find_package(roscpp REQUIRED)
+find_package(std_msgs REQUIRED)
+include_directories(${roscpp_INCLUDE_DIRS})
+include_directories(${std_msgs_INCLUDE_DIRS})
+
+
 include_directories(${CMAKE_BINARY_DIR})
 include_directories(${PROJECT_SOURCE_DIR})
 include_directories("include/")
@@ -20,7 +26,7 @@ file(GLOB sources "src/*.cpp" "src/rt/*.c"  "src/rt/*.cpp")
 
 add_library(robot SHARED ${sources})
 
-target_link_libraries(robot biomimetics pthread lcm inih dynacore_param_handler lord_imu soem)
+target_link_libraries(robot biomimetics pthread lcm inih dynacore_param_handler lord_imu soem ${roscpp_LIBRARIES} ${std_msgs_LIBRARIES})
 if(CMAKE_SYSTEM_NAME MATCHES Linux)
 target_link_libraries(robot libvnc rt)
 endif()

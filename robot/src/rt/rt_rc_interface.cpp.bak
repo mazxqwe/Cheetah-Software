@@ -4,13 +4,6 @@
 #include <string.h> // memcpy
 #include <stdio.h>
 #include <rt/rt_sbus.h>
-
-#include "ros/ros.h"
-#include "std_msgs/Int16.h"
-
-#include <iostream>
-
-
 static pthread_mutex_t lcm_get_set_mutex =
 PTHREAD_MUTEX_INITIALIZER; /**< mutex to protect gui settings coming over
                              LCM */
@@ -24,7 +17,6 @@ rc_control_settings rc_control;
 void get_rc_control_settings(void *settings) {
   pthread_mutex_lock(&lcm_get_set_mutex);
   v_memcpy(settings, &rc_control, sizeof(rc_control_settings));
-  std::cout<<rc_control.v_des[0]<<std::endl;
   pthread_mutex_unlock(&lcm_get_set_mutex);
 }
 
@@ -33,46 +25,12 @@ void get_rc_control_settings(void *settings) {
 //v_memcpy(settings, &rc_channels, sizeof(rc_channels));
 //pthread_mutex_unlock(&lcm_get_set_mutex);
 //}
-/*
+
 EdgeTrigger<int> mode_edge_trigger(0);
 EdgeTrigger<TaranisSwitchState> backflip_prep_edge_trigger(SWITCH_UP);
 EdgeTrigger<TaranisSwitchState> experiment_prep_edge_trigger(SWITCH_UP);
 TaranisSwitchState initial_mode_go_switch = SWITCH_DOWN;
-*/
 
-
-void ROS_controll_Callback(const std_msgs::Int16::ConstPtr& msg)
-{
-  rc_control.v_des[0] = msg->data;
-  std::cout<<rc_control.v_des[0]<<std::endl;
-}
-
-
-
-void ROS_command_sub()
-{
-
-  int a = 0;
-  char * b =nullptr;
-  ros::init(a, &b, "robodog_sub");
-
-  ros::NodeHandle n;
-
-  ROS_INFO("Node initialized");
-
-//  ros::AsyncSpinner spinner(1);
-
-//  spinner.start();
-
-  ros::Subscriber subscr = n.subscribe("rc_dog", 100, ROS_controll_Callback);
-
-  ros::spin();
-
-//  ros::waitForShutdown();
-}
-
-
-/*
 void sbus_packet_complete() {
   Taranis_X7_data data;
   update_taranis_x7(&data);
@@ -203,9 +161,6 @@ void sbus_packet_complete() {
   break;
 }
 
-*/
-
-/*
 bool trigger = mode_edge_trigger.trigger(selected_mode);
 if(trigger || selected_mode == RC_mode::OFF || selected_mode == RC_mode::RECOVERY_STAND) {
   if(trigger) {
@@ -213,16 +168,13 @@ if(trigger || selected_mode == RC_mode::OFF || selected_mode == RC_mode::RECOVER
   }
   rc_control.mode = selected_mode;
 }
+
 }
-*/
-
-
 
 void *v_memcpy(void *dest, volatile void *src, size_t n) {
   void *src_2 = (void *)src;
   return memcpy(dest, src_2, n);
 }
-
 
 float deadband(float command, float deadbandRegion, float minVal, float maxVal){
   if (command < deadbandRegion && command > -deadbandRegion) {

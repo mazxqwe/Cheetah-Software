@@ -325,7 +325,7 @@ void MiniCheetahHardwareBridge::run() {
   visualizationLCMTask.start();
 
   // rc controller
-  _port = init_sbus(false);  // Not Simulation
+  _port = init_sbus(false);  // Not Simulation TODO add ROS-subscriber init
   PeriodicMemberFunction<HardwareBridge> sbusTask(
       &taskManager, .005, "rc_controller", &HardwareBridge::run_sbus, this);
   sbusTask.start();
@@ -344,14 +344,18 @@ void MiniCheetahHardwareBridge::run() {
 /*!
  * Receive RC with SBUS
  */
-void HardwareBridge::run_sbus() {
+void HardwareBridge::run_sbus(){}
+  /*
   if (_port > 0) {
     int x = receive_sbus(_port);
+    
     if (x) {
       sbus_packet_complete();
     }
+    
   }
-}
+  */
+
 
 void MiniCheetahHardwareBridge::runMicrostrain() {
   while(true) {

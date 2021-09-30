@@ -261,8 +261,11 @@ void SimulationBridge::runRobotControl() {
  * Run the RC receive thread
  */
 void SimulationBridge::run_sbus() {
+  
+  ROS_command_sub();
+  /*
   printf("[run_sbus] starting...\n");
-  int port = init_sbus(true);  // Simulation
+  int port = init_sbus(true);  // Should replace with ROS subscriber init
   while (true) {
     if (port > 0) {
       int x = receive_sbus(port);
@@ -270,6 +273,6 @@ void SimulationBridge::run_sbus() {
         sbus_packet_complete();
       }
     }
+    */
     usleep(5000);
   }
-}

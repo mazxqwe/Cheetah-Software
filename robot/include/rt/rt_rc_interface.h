@@ -31,7 +31,9 @@ namespace RC_mode{
   constexpr int TWO_LEG_STANCE = 21;
 };
 
-void sbus_packet_complete();
+//void ROS_controll_Callback(const std_msgs::Int16::ConstPtr& msg);
+
+void ROS_command_sub();
 
 void get_rc_control_settings(void* settings);
 //void get_rc_channels(void* settings);
