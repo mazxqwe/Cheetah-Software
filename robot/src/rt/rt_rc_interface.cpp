@@ -6,6 +6,7 @@
 #include <rt/rt_sbus.h>
 
 #include "ros/ros.h"
+#include "geometry_msgs/Twist.h"
 #include "std_msgs/Int16.h"
 
 #include <iostream>
@@ -24,7 +25,6 @@ rc_control_settings rc_control;
 void get_rc_control_settings(void *settings) {
   pthread_mutex_lock(&lcm_get_set_mutex);
   v_memcpy(settings, &rc_control, sizeof(rc_control_settings));
-  std::cout<<rc_control.v_des[0]<<std::endl;
   pthread_mutex_unlock(&lcm_get_set_mutex);
 }
 
@@ -41,10 +41,18 @@ TaranisSwitchState initial_mode_go_switch = SWITCH_DOWN;
 */
 
 
-void ROS_controll_Callback(const std_msgs::Int16::ConstPtr& msg)
-{
-  rc_control.v_des[0] = msg->data;
-  std::cout<<rc_control.v_des[0]<<std::endl;
+void ROS_controll_mode_Callback(const std_msgs::Int16::ConstPtr& mode)
+{ 
+  rc_control.mode = mode->data;
+  std::cout<<"rc_mode:  "<<rc_control.mode<<std::endl;
+}
+
+void ROS_twist_Callback(const geometry_msgs::Twist::ConstPtr& vel)
+{ 
+  rc_control.v_des[0] = vel->linear.x;
+  rc_control.v_des[1] = vel->linear.y;
+  rc_control.omega_des[2] = vel->angular.z;
+  rc_control.height_variation = vel->linear.z;
 }
 
 
@@ -60,15 +68,17 @@ void ROS_command_sub()
 
   ROS_INFO("Node initialized");
 
-//  ros::AsyncSpinner spinner(1);
+  ros::AsyncSpinner spinner(1);
 
-//  spinner.start();
+  spinner.start();
 
-  ros::Subscriber subscr = n.subscribe("rc_dog", 100, ROS_controll_Callback);
+  rc_control.mode = 1;
 
-  ros::spin();
+  ros::Subscriber subt_rc_mode = n.subscribe("rc_mode", 100, ROS_controll_mode_Callback);
 
-//  ros::waitForShutdown();
+  ros::Subscriber subtwist = n.subscribe("cmd_vel", 100, ROS_twist_Callback);
+
+  ros::waitForShutdown();
 }
 
 

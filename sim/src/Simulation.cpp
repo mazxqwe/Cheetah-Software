@@ -316,21 +316,6 @@ void Simulation::firstRun() {
     sendControlParameter(kv.first, kv.second->get(kv.second->_kind),
                          kv.second->_kind, true);
   }
-  /*
-  //CARGO_CULT FOR TEH WINZ!!!
-  usleep(1000000);
-  ControlParameterValue val_of_control_mode_to_set;
-  val_of_control_mode_to_set.d = 1.0;
-  usleep(10000000);
-  sendControlParameter(_robotParams.param_control_mode._name, val_of_control_mode_to_set, _robotParams.param_control_mode._kind, false);
-
-
-  usleep(1000000);
-  //ControlParameterValue val_of_control_mode_to_set;
-  val_of_control_mode_to_set.d = 10.0;
-  usleep(10000000);
-  sendControlParameter(_robotParams.param_control_mode._name, val_of_control_mode_to_set, _robotParams.param_control_mode._kind, false);
-*/
 }
 
 /*!

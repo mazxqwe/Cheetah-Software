@@ -19,6 +19,7 @@ class rc_control_settings {
 
 namespace RC_mode{
   constexpr int OFF = 0;
+  constexpr int STAND_UP = 2;
   constexpr int QP_STAND = 3;
   constexpr int BACKFLIP_PRE = 4;
   constexpr int BACKFLIP = 5;
@@ -30,8 +31,6 @@ namespace RC_mode{
   constexpr int TWO_LEG_STANCE_PRE = 20;
   constexpr int TWO_LEG_STANCE = 21;
 };
-
-//void ROS_controll_Callback(const std_msgs::Int16::ConstPtr& msg);
 
 void ROS_command_sub();
 
