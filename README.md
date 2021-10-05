@@ -98,6 +98,10 @@ to add lcm to paths
 
 To use Ipopt, use CMake Ipopt option. Ex) cmake -DIPOPT_OPTION=ON ..
 
-## TODO
+## ROS integration
 
-ROS currently added semi correctly. This workaround should be fixed  further...
+Two topics implemented: cmd_vel with standard Twist funtions. Linear.z is for height variations. and rc_mode topic to change state according to the table:
+
+OFF = 0; STAND_UP = 2; QP_STAND = 3; BACKFLIP_PRE = 4; BACKFLIP = 5; VISION = 6; LOCOMOTION = 11; RECOVERY_STAND = 12;
+
+// Experiment Mode TWO_LEG_STANCE_PRE = 20; TWO_LEG_STANCE = 21;
