@@ -54,7 +54,7 @@ void FSM_State_JointPD<T>::run() {
   Vec3<T> qDes0;
   qDes0 << 0.2, -0.5, 0;
   Vec3<T> qDesGiveHand;
-  qDesGiveHand << 0.2, -0.2, 1.7;
+  qDesGiveHand << -1.5, 0.8, 2.5;
   Vec3<T> qdDes;
   qdDes << 0, 0, 0;
 
@@ -63,7 +63,7 @@ void FSM_State_JointPD<T>::run() {
 
   progress_sit += this->_data->controlParameters->controller_dt;
   double sit_duration(3.0);
-  double give_hand_duration(2.0);
+  double give_hand_duration(1.0);
   double ratio_sit = progress_sit/sit_duration;
   double ratio_give_hand = progress_give_hand/give_hand_duration;
   
