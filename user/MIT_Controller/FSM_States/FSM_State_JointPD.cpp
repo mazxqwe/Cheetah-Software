@@ -19,6 +19,9 @@ _ini_jpos(cheetah::num_act_joint){
   // Do nothing here yet
 }
 
+
+
+
 template <typename T>
 void FSM_State_JointPD<T>::onEnter() {
   // Default is to not transition
@@ -44,21 +47,52 @@ void FSM_State_JointPD<T>::onEnter() {
 template <typename T>
 void FSM_State_JointPD<T>::run() {
   // This is just a test, should be running whatever other code you want
-  Vec3<T> qDes;
-  qDes << 0, -1.052, 2.63;
+  Vec3<T> qDesR;
+  qDesR << 0, 1, -2.7;
+  Vec3<T> qDes1;
+  qDes1 << -0.2, -0.5, 0;
+  Vec3<T> qDes0;
+  qDes0 << 0.2, -0.5, 0;
+  Vec3<T> qDesGiveHand;
+  qDesGiveHand << 0.2, -0.2, 1.7;
   Vec3<T> qdDes;
   qdDes << 0, 0, 0;
 
-  static double progress(0.);
-  progress += this->_data->controlParameters->controller_dt;
-  double movement_duration(3.0);
-  double ratio = progress/movement_duration;
-  if(ratio > 1.) ratio = 1.;
+  static double progress_sit(.0);
+  static double progress_give_hand(.0);
 
-  this->jointPDControl(0, ratio*qDes + (1. - ratio)*_ini_jpos.head(3), qdDes);
-  this->jointPDControl(1, ratio*qDes + (1. - ratio)*_ini_jpos.segment(3, 3), qdDes);
-  this->jointPDControl(2, ratio*qDes + (1. - ratio)*_ini_jpos.segment(6, 3), qdDes);
-  this->jointPDControl(3, ratio*qDes + (1. - ratio)*_ini_jpos.segment(9, 3), qdDes);
+  progress_sit += this->_data->controlParameters->controller_dt;
+  double sit_duration(3.0);
+  double give_hand_duration(2.0);
+  double ratio_sit = progress_sit/sit_duration;
+  double ratio_give_hand = progress_give_hand/give_hand_duration;
+  
+  
+  bool sit_done = false;
+  if(ratio_sit > 1.) 
+  {
+    ratio_sit = 1.;
+    sit_done = true;
+  }
+
+  this->jointPDControl(0, ratio_sit*qDes0 + (1. - ratio_sit)*_ini_jpos.segment(0, 3), qdDes);
+  this->jointPDControl(1, ratio_sit*qDes1 + (1. - ratio_sit)*_ini_jpos.segment(3, 3), qdDes);
+  this->jointPDControl(2, ratio_sit*qDesR + (1. - ratio_sit)*_ini_jpos.segment(6, 3), qdDes);
+  this->jointPDControl(3, ratio_sit*qDesR + (1. - ratio_sit)*_ini_jpos.segment(9, 3), qdDes);
+
+  if (sit_done)
+  {
+    if(ratio_give_hand > 1.) {ratio_give_hand = 1.;}
+    progress_give_hand += this->_data->controlParameters->controller_dt;
+
+    this->jointPDControl(0, ratio_give_hand*qDesGiveHand + (1. - ratio_give_hand)*qDes0, qdDes);
+    this->jointPDControl(1, qDes1, qdDes);
+    this->jointPDControl(2, qDesR, qdDes);
+    this->jointPDControl(3, qDesR, qdDes);
+
+  }
+
+
 }
 
 /**
@@ -77,6 +111,10 @@ FSM_StateName FSM_State_JointPD<T>::checkTransition() {
   switch ((int)this->_data->controlParameters->control_mode) {
     case K_JOINT_PD:
       // Normal operation for state based transitions
+      this->nextStateName = FSM_StateName::JOINT_PD;
+
+      // Transition time is 0.5 second
+      this->transitionDuration = 0.5;
       break;
 
     case K_IMPEDANCE_CONTROL:
@@ -173,7 +211,7 @@ TransitionData<T> FSM_State_JointPD<T>::transition() {
  */
 template <typename T>
 void FSM_State_JointPD<T>::onExit() {
-  // Nothing to clean up when exiting
+  // To clear smthing
 }
 
 // template class FSM_State_JointPD<double>;

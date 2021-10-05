@@ -1,52 +1,8 @@
 #include "../include/JoystickTest.h"
-//#include "ui_JoystickTest.h"
-//#include <QTimer>
-#include "ros/ros.h"
-#include "std_msgs/String.h"
-
-#include <sstream>
-
-void ne_main()
-{
-  int a = 0;
-  char * b =nullptr;
-  ros::init(a, &b, "talker");
+#include "ui_JoystickTest.h"
+#include <QTimer>
 
 
-  ros::NodeHandle n;
-
-  
-  ros::Publisher chatter_pub = n.advertise<std_msgs::String>("chatter", 1000);
-
-  ros::Rate time_out(10);
-
-
-  std_msgs::String msg;
-
-  std::stringstream ss;
-  ss << "PREVED VoltBratushki from MIT";
-  msg.data = ss.str();
-
-  ROS_INFO("%s", msg.data.c_str());
-
-  time_out.sleep();
-
-  chatter_pub.publish(msg);
-
-  time_out.sleep();
-
-  ros::spinOnce();
-}
-
-void buttonClicked()
-{
-  std::cout<<"EXECUTING HERE"<<std::endl;
-  ne_main();
-}
-
-
-
-/*
 JoystickTestWindow::JoystickTestWindow(GameController& gamepad, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::JoystickTestWindow),
@@ -81,5 +37,3 @@ void JoystickTestWindow::update() {
   sprintf(buffer, "Right Y: %4.2f\n", _command.rightStickAnalog[1]);
   ui->rightYLabel->setText(buffer);
 }
-
-*/

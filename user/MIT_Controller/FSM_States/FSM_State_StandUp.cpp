@@ -91,6 +91,9 @@ FSM_StateName FSM_State_StandUp<T>::checkTransition() {
       this->nextStateName = FSM_StateName::VISION;
       break;
 
+    case K_JOINT_PD:
+      this->nextStateName = FSM_StateName::JOINT_PD;
+      break;
 
     case K_PASSIVE:  // normal c
       this->nextStateName = FSM_StateName::PASSIVE;
@@ -132,6 +135,9 @@ TransitionData<T> FSM_State_StandUp<T>::transition() {
       this->transitionData.done = true;
       break;
 
+    case FSM_StateName::JOINT_PD:
+      this->transitionData.done = true;
+      break;
 
     default:
       std::cout << "[CONTROL FSM] Something went wrong in transition"

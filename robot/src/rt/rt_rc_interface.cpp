@@ -51,7 +51,7 @@ void ROS_twist_Callback(const geometry_msgs::Twist::ConstPtr& vel)
 { 
   rc_control.v_des[0] = vel->linear.x;
   rc_control.v_des[1] = vel->linear.y;
-  rc_control.omega_des[2] = vel->angular.z;
+  rc_control.omega_des[2] = - vel->angular.z; //to align ROS linear basis
   rc_control.height_variation = vel->linear.z;
 }
 

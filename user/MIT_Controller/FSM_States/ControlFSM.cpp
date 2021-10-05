@@ -106,6 +106,9 @@ void ControlFSM<T>::runFSM() {
 
     } else if(rc_mode == RC_mode::QP_STAND){
       data.controlParameters->control_mode = K_BALANCE_STAND;
+    
+    } else if(rc_mode == RC_mode::JP_TEST){
+      data.controlParameters->control_mode = K_JOINT_PD;
 
     } else if(rc_mode == RC_mode::STAND_UP){
       data.controlParameters->control_mode = K_STAND_UP;
