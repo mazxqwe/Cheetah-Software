@@ -15,6 +15,7 @@
 #define TASK_PRIORITY 49      // linux priority, this is not the nice value
 
 #include <string>
+#include <thread>
 #include <lcm-cpp.hpp>
 #include <lord_imu/LordImu.h>
 
@@ -96,6 +97,7 @@ class MiniCheetahHardwareBridge : public HardwareBridge {
   void run();
   void runMicrostrain();
   void logMicrostrain();
+  void ROS_connect_as_rc();
   void abort(const std::string& reason);
   void abort(const char* reason);
 
@@ -108,6 +110,8 @@ class MiniCheetahHardwareBridge : public HardwareBridge {
   microstrain_lcmt _microstrainData;
   bool _microstrainInit = false;
   bool _load_parameters_from_file;
+
+  std::thread* ROS_thread;
 };
 
 class Cheetah3HardwareBridge : public HardwareBridge {

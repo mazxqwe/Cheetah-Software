@@ -14,7 +14,7 @@
 #include "Configuration.h"
 
 #include "HardwareBridge.h"
-//#include "rt/rt_rc_interface.h"
+#include "rt/rt_rc_interface.h"
 #include "rt/rt_spi.h"
 #include "rt/rt_vectornav.h"
 #include "rt/rt_ethercat.h"
@@ -108,6 +108,9 @@ void HardwareBridge::handleGamepadLCM(const lcm::ReceiveBuffer* rbuf,
   (void)chan;
   _gamepadCommand.set(msg);
 }
+
+
+
 
 /*!
  * LCM Handler for control parameters
@@ -350,6 +353,9 @@ void MiniCheetahHardwareBridge::run() {
       &taskManager, .001, "microstrain-logger", &MiniCheetahHardwareBridge::logMicrostrain, this);
   microstrainLogger.start();
 
+
+  ROS_thread = new std::thread(&MiniCheetahHardwareBridge::ROS_connect_as_rc, this);
+
   for (;;) {
     usleep(1000000);
     // printf("joy %f\n", _robotRunner->driverCommand->leftStickAnalog[0]);
@@ -390,9 +396,14 @@ void MiniCheetahHardwareBridge::initHardware() {
     //initError("failed to initialize vectornav!\n", false);
   }
 #endif
-
   init_can();
   _microstrainInit = _microstrainImu.tryInit(0, 921600);
+}
+
+
+void MiniCheetahHardwareBridge::ROS_connect_as_rc() {
+    ROS_command_sub();
+    usleep(5000);
 }
 
 void Cheetah3HardwareBridge::initHardware() {
