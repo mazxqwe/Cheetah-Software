@@ -15,7 +15,6 @@
 
 #include "HardwareBridge.h"
 //#include "rt/rt_rc_interface.h"
-#include "rt/rt_sbus.h"
 #include "rt/rt_spi.h"
 #include "rt/rt_vectornav.h"
 #include "rt/rt_ethercat.h"
@@ -235,27 +234,44 @@ void MiniCheetahHardwareBridge::run() {
   initCommon();
   initHardware();
 
-  if(_load_parameters_from_file) {
+  _load_parameters_from_file = true;
+
+  if(_load_parameters_from_file) 
+  {
     printf("[Hardware Bridge] Loading parameters from file...\n");
 
-    try {
+    try 
+    {
       _robotParams.initializeFromYamlFile(THIS_COM "config/mini-cheetah-defaults.yaml");
-    } catch(std::exception& e) {
+    } 
+    catch(std::exception& e) 
+    {
       printf("Failed to initialize robot parameters from yaml file: %s\n", e.what());
       exit(1);
     }
 
-    if(!_robotParams.isFullyInitialized()) {
+    if(!_robotParams.isFullyInitialized()) 
+    {
       printf("Failed to initialize all robot parameters\n");
       exit(1);
     }
+    else 
+    {
+      printf("Loaded robot parameters\n");
+      printf("Loaded: %f \n", _robotParams.foot_sensor_noise_position);
+    }
 
-    printf("Loaded robot parameters\n");
-
-    if(_userControlParameters) {
-      try {
+    if(_userControlParameters) 
+    //if( 1 ) 
+    {
+      printf("Loading user parameters...\n");
+      try 
+      {
         _userControlParameters->initializeFromYamlFile(THIS_COM "config/mc-mit-ctrl-user-parameters.yaml");
-      } catch(std::exception& e) {
+        //_userControlParameters->initializeFromYamlFile(THIS_COM "config/c3-jpos-user-parameters.yaml");
+      } 
+      catch(std::exception& e) 
+      {
         printf("Failed to initialize user parameters from yaml file: %s\n", e.what());
         exit(1);
       }
@@ -266,12 +282,17 @@ void MiniCheetahHardwareBridge::run() {
       }
 
       printf("Loaded user parameters\n");
-    } else {
+    } 
+    else 
+    {
       printf("Did not load user parameters because there aren't any\n");
     }
-  } else {
-    printf("[Hardware Bridge] Loading parameters over LCM...\n");
-    while (!_robotParams.isFullyInitialized()) {
+  } 
+  else 
+  {
+    printf("[Hardware Bridge] This is Dimas! Loading parameters over LCM...\n");
+    while (!_robotParams.isFullyInitialized()) 
+    {
       printf("[Hardware Bridge] Waiting for robot parameters...\n");
       usleep(1000000);
     }
@@ -308,7 +329,7 @@ void MiniCheetahHardwareBridge::run() {
 
   // spi Task start
   PeriodicMemberFunction<MiniCheetahHardwareBridge> spiTask(
-      &taskManager, .002, "spi", &MiniCheetahHardwareBridge::runSpi, this);
+      &taskManager, .002, "spi", &MiniCheetahHardwareBridge::runCan, this);
   spiTask.start();
 
   // microstrain
@@ -324,12 +345,6 @@ void MiniCheetahHardwareBridge::run() {
       &MiniCheetahHardwareBridge::publishVisualizationLCM, this);
   visualizationLCMTask.start();
 
-  // rc controller
-  _port = init_sbus(false);  // Not Simulation TODO add ROS-subscriber init
-  PeriodicMemberFunction<HardwareBridge> sbusTask(
-      &taskManager, .005, "rc_controller", &HardwareBridge::run_sbus, this);
-  sbusTask.start();
-
   // temporary hack: microstrain logger
   PeriodicMemberFunction<MiniCheetahHardwareBridge> microstrainLogger(
       &taskManager, .001, "microstrain-logger", &MiniCheetahHardwareBridge::logMicrostrain, this);
@@ -340,22 +355,6 @@ void MiniCheetahHardwareBridge::run() {
     // printf("joy %f\n", _robotRunner->driverCommand->leftStickAnalog[0]);
   }
 }
-
-/*!
- * Receive RC with SBUS
- */
-void HardwareBridge::run_sbus(){}
-  /*
-  if (_port > 0) {
-    int x = receive_sbus(_port);
-    
-    if (x) {
-      sbus_packet_complete();
-    }
-    
-  }
-  */
-
 
 void MiniCheetahHardwareBridge::runMicrostrain() {
   while(true) {
@@ -392,7 +391,7 @@ void MiniCheetahHardwareBridge::initHardware() {
   }
 #endif
 
-  init_spi();
+  init_can();
   _microstrainInit = _microstrainImu.tryInit(0, 921600);
 }
 
@@ -413,12 +412,12 @@ void Cheetah3HardwareBridge::initHardware() {
 /*!
  * Run Mini Cheetah SPI
  */
-void MiniCheetahHardwareBridge::runSpi() {
-  spi_command_t* cmd = get_spi_command();
-  spi_data_t* data = get_spi_data();
+void MiniCheetahHardwareBridge::runCan() {
+  spi_command_t* cmd = get_can_command();
+  spi_data_t* data = get_can_data();
 
   memcpy(cmd, &_spiCommand, sizeof(spi_command_t));
-  spi_driver_run();
+  can_driver_run();
   memcpy(&_spiData, data, sizeof(spi_data_t));
 
   _spiLcm.publish("spi_data", data);
@@ -584,7 +583,6 @@ void Cheetah3HardwareBridge::run() {
 //  PeriodicMemberFunction<HardwareBridge> sbusTask(
 //      &taskManager, .005, "rc_controller", &HardwareBridge::run_sbus, this);
 //  sbusTask.start();
-
 
   for (;;) {
     usleep(100000);

@@ -26,6 +26,7 @@
 #include "microstrain_lcmt.hpp"
 #include "ecat_command_t.hpp"
 #include "ecat_data_t.hpp"
+//#include "../../user/MIT_Controller/MIT_UserParameters.h"
 
 
 
@@ -55,7 +56,6 @@ class HardwareBridge {
                               const control_parameter_request_lcmt* msg);
 
   void publishVisualizationLCM();
-  void run_sbus();
 
  protected:
   PeriodicTaskManager taskManager;
@@ -79,6 +79,7 @@ class HardwareBridge {
   std::thread _interfaceLcmThread;
   volatile bool _interfaceLcmQuit = false;
   RobotController* _controller = nullptr;
+  //MIT_UserParameters* _userControlParameters = nullptr;
   ControlParameters* _userControlParameters = nullptr;
 
   int _port;
@@ -90,7 +91,7 @@ class HardwareBridge {
 class MiniCheetahHardwareBridge : public HardwareBridge {
  public:
   MiniCheetahHardwareBridge(RobotController* rc, bool load_parameters_from_file);
-  void runSpi();
+  void runCan();
   void initHardware();
   void run();
   void runMicrostrain();

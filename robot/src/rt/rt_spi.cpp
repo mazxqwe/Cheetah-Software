@@ -22,10 +22,10 @@ uint8_t lsb = 0x01;
 int spi_1_fd = -1;
 int spi_2_fd = -1;
 
-int spi_open();
+int can_open();
 
-static spine_cmd_t g_spine_cmd;
-static spine_data_t g_spine_data;
+//static spine_cmd_t g_spine_cmd;
+//static spine_data_t g_spine_data;
 
 spi_command_t spi_command_drv;
 spi_data_t spi_data_drv;
@@ -47,7 +47,7 @@ const float abad_offset[4] = {0.f, 0.f, 0.f, 0.f};
 const float hip_offset[4] = {M_PI / 2.f, -M_PI / 2.f, -M_PI / 2.f, M_PI / 2.f};
 const float knee_offset[4] = {K_KNEE_OFFSET_POS, -K_KNEE_OFFSET_POS,
                               -K_KNEE_OFFSET_POS, K_KNEE_OFFSET_POS};
-
+                              
 /*!
  * Compute SPI message checksum
  * @param data : input
@@ -114,7 +114,7 @@ void fake_spine_control(spi_command_t *cmd, spi_data_t *data,
 /*!
  * Initialize SPI
  */
-void init_spi() {
+void init_can() {
   // check sizes:
   size_t command_size = sizeof(spi_command_t);
   size_t data_size = sizeof(spi_data_t);
@@ -137,59 +137,130 @@ void init_spi() {
   } else
     printf("[RT SPI] data size good\n");
 
+  printf("This is Dimas from the rt_spi.cpp!\n"); 
   printf("[RT SPI] Open\n");
-  spi_open();
+  can_open();
 }
+
+int s = 0; //socket
+int s1 = 0; //socket
+int s2 = 0; //socket
+int s3 = 0; //socket
 
 /*!
  * Open SPI device
  */
-int spi_open() {
+int can_open() 
+{
   int rv = 0;
-  spi_1_fd = open("/dev/spidev2.0", O_RDWR);
-  if (spi_1_fd < 0) perror("[ERROR] Couldn't open spidev 2.0");
-  spi_2_fd = open("/dev/spidev2.1", O_RDWR);
-  if (spi_2_fd < 0) perror("[ERROR] Couldn't open spidev 2.1");
+  int nonblock = 1;
+  std::string can_name = "can0";
 
-  rv = ioctl(spi_1_fd, SPI_IOC_WR_MODE, &spi_mode);
-  if (rv < 0) perror("[ERROR] ioctl spi_ioc_wr_mode (1)");
+  std::cout << "pidor!" << std::endl;
+  
+  int enable_canfd = 1;
+  struct ifreq ifr;
+  struct sockaddr_can addr;
 
-  rv = ioctl(spi_2_fd, SPI_IOC_WR_MODE, &spi_mode);
-  if (rv < 0) perror("[ERROR] ioctl spi_ioc_wr_mode (2)");
+  if ((s = socket(PF_CAN, SOCK_RAW, CAN_RAW)) < 0) { perror("Socket");}
 
-  rv = ioctl(spi_1_fd, SPI_IOC_RD_MODE, &spi_mode);
-  if (rv < 0) perror("[ERROR] ioctl spi_ioc_rd_mode (1)");
+  if( nonblock )
+  {
+    fcntl(s, F_SETFL, O_NONBLOCK); // non blocking CAN frame receiving => reading from this socket does not block execution.
+  }
 
-  rv = ioctl(spi_2_fd, SPI_IOC_RD_MODE, &spi_mode);
-  if (rv < 0) perror("[ERROR] ioctl spi_ioc_rd_mode (2)");
+  strcpy(ifr.ifr_name, can_name.c_str() );
+  ioctl(s, SIOCGIFINDEX, &ifr);
 
-  rv = ioctl(spi_1_fd, SPI_IOC_WR_BITS_PER_WORD, &spi_bits_per_word);
-  if (rv < 0) perror("[ERROR] ioctl spi_ioc_wr_bits_per_word (1)");
+  memset(&addr, 0, sizeof(addr));
+  addr.can_family = AF_CAN;
+  addr.can_ifindex = ifr.ifr_ifindex;
 
-  rv = ioctl(spi_2_fd, SPI_IOC_WR_BITS_PER_WORD, &spi_bits_per_word);
-  if (rv < 0) perror("[ERROR] ioctl spi_ioc_wr_bits_per_word (2)");
+  if (setsockopt(s, SOL_CAN_RAW, CAN_RAW_FD_FRAMES, &enable_canfd, sizeof(enable_canfd))) { perror("FD");}
 
-  rv = ioctl(spi_1_fd, SPI_IOC_RD_BITS_PER_WORD, &spi_bits_per_word);
-  if (rv < 0) perror("[ERROR] ioctl spi_ioc_rd_bits_per_word (1)");
+  int optval=7; // valid values are in the range [1,7] ; 1- low priority, 7 - high priority
+  if ( setsockopt(s, SOL_SOCKET, SO_PRIORITY, &optval, sizeof(optval))) { perror("Priority");} //makes no difference on receiving
+  //if ( setsockopt(*s, SOL_SOCKET, SO_BUSY_POLL, &optval, sizeof(optval))) { perror("Busy poll");} //makes no difference on receiving
+  if (bind(s, (struct sockaddr *)&addr, sizeof(addr)) < 0) { perror("Bind");}
 
-  rv = ioctl(spi_2_fd, SPI_IOC_RD_BITS_PER_WORD, &spi_bits_per_word);
-  if (rv < 0) perror("[ERROR] ioctl spi_ioc_rd_bits_per_word (2)");
+  /*********************************************************************************************/
 
-  rv = ioctl(spi_1_fd, SPI_IOC_WR_MAX_SPEED_HZ, &spi_speed);
-  if (rv < 0) perror("[ERROR] ioctl spi_ioc_wr_max_speed_hz (1)");
-  rv = ioctl(spi_2_fd, SPI_IOC_WR_MAX_SPEED_HZ, &spi_speed);
-  if (rv < 0) perror("[ERROR] ioctl spi_ioc_wr_max_speed_hz (2)");
+  can_name = "can1";
 
-  rv = ioctl(spi_1_fd, SPI_IOC_RD_MAX_SPEED_HZ, &spi_speed);
-  if (rv < 0) perror("[ERROR] ioctl spi_ioc_rd_max_speed_hz (1)");
-  rv = ioctl(spi_2_fd, SPI_IOC_RD_MAX_SPEED_HZ, &spi_speed);
-  if (rv < 0) perror("[ERROR] ioctl spi_ioc_rd_max_speed_hz (2)");
+  std::cout << "snova pidor!" << std::endl;
 
-  rv = ioctl(spi_1_fd, SPI_IOC_RD_LSB_FIRST, &lsb);
-  if (rv < 0) perror("[ERROR] ioctl spi_ioc_rd_lsb_first (1)");
+  if ((s1 = socket(PF_CAN, SOCK_RAW, CAN_RAW)) < 0) { perror("Socket");}
 
-  rv = ioctl(spi_2_fd, SPI_IOC_RD_LSB_FIRST, &lsb);
-  if (rv < 0) perror("[ERROR] ioctl spi_ioc_rd_lsb_first (2)");
+  if( nonblock )
+  {
+    fcntl(s1, F_SETFL, O_NONBLOCK); // non blocking CAN frame receiving => reading from this socket does not block execution.
+  }
+
+  strcpy(ifr.ifr_name, can_name.c_str() );
+  ioctl(s1, SIOCGIFINDEX, &ifr);
+
+  memset(&addr, 0, sizeof(addr));
+  addr.can_family = AF_CAN;
+  addr.can_ifindex = ifr.ifr_ifindex;
+
+  if (setsockopt(s1, SOL_CAN_RAW, CAN_RAW_FD_FRAMES, &enable_canfd, sizeof(enable_canfd))) { perror("FD");}
+
+  if ( setsockopt(s1, SOL_SOCKET, SO_PRIORITY, &optval, sizeof(optval))) { perror("Priority");} //makes no difference on receiving
+  //if ( setsockopt(*s, SOL_SOCKET, SO_BUSY_POLL, &optval, sizeof(optval))) { perror("Busy poll");} //makes no difference on receiving
+  if (bind(s1, (struct sockaddr *)&addr, sizeof(addr)) < 0) { perror("Bind");}  
+
+  /*********************************************************************************************/
+
+  can_name = "can2";
+
+  std::cout << "i snova pidor!" << std::endl;
+
+  if ((s2 = socket(PF_CAN, SOCK_RAW, CAN_RAW)) < 0) { perror("Socket");}
+
+  if( nonblock )
+  {
+    fcntl(s2, F_SETFL, O_NONBLOCK); // non blocking CAN frame receiving => reading from this socket does not block execution.
+  }
+
+  strcpy(ifr.ifr_name, can_name.c_str() );
+  ioctl(s2, SIOCGIFINDEX, &ifr);
+
+  memset(&addr, 0, sizeof(addr));
+  addr.can_family = AF_CAN;
+  addr.can_ifindex = ifr.ifr_ifindex;
+
+  if (setsockopt(s2, SOL_CAN_RAW, CAN_RAW_FD_FRAMES, &enable_canfd, sizeof(enable_canfd))) { perror("FD");}
+
+  if ( setsockopt(s2, SOL_SOCKET, SO_PRIORITY, &optval, sizeof(optval))) { perror("Priority");} //makes no difference on receiving
+  //if ( setsockopt(*s, SOL_SOCKET, SO_BUSY_POLL, &optval, sizeof(optval))) { perror("Busy poll");} //makes no difference on receiving
+  if (bind(s2, (struct sockaddr *)&addr, sizeof(addr)) < 0) { perror("Bind");}    
+
+  /*********************************************************************************************/
+
+  can_name = "can3";
+
+  std::cout << "i opyat snova pidor!" << std::endl;
+
+  if ((s3 = socket(PF_CAN, SOCK_RAW, CAN_RAW)) < 0) { perror("Socket");}
+
+  if( nonblock )
+  {
+    fcntl(s3, F_SETFL, O_NONBLOCK); // non blocking CAN frame receiving => reading from this socket does not block execution.
+  }
+
+  strcpy(ifr.ifr_name, can_name.c_str() );
+  ioctl(s3, SIOCGIFINDEX, &ifr);
+
+  memset(&addr, 0, sizeof(addr));
+  addr.can_family = AF_CAN;
+  addr.can_ifindex = ifr.ifr_ifindex;
+
+  if (setsockopt(s3, SOL_CAN_RAW, CAN_RAW_FD_FRAMES, &enable_canfd, sizeof(enable_canfd))) { perror("FD");}
+
+  if ( setsockopt(s3, SOL_SOCKET, SO_PRIORITY, &optval, sizeof(optval))) { perror("Priority");} //makes no difference on receiving
+  //if ( setsockopt(*s, SOL_SOCKET, SO_BUSY_POLL, &optval, sizeof(optval))) { perror("Busy poll");} //makes no difference on receiving
+  if (bind(s3, (struct sockaddr *)&addr, sizeof(addr)) < 0) { perror("Bind");}      
+
   return rv;
 }
 
@@ -207,14 +278,11 @@ void spi_to_spine(spi_command_t *cmd, spine_cmd_t *spine_cmd, int leg_0) {
     // (cmd->q_des_knee[i+leg_0] + knee_offset[i+leg_0]) /
     // knee_side_sign[i+leg_0];
     spine_cmd->q_des_abad[i] =
-        (cmd->q_des_abad[i + leg_0] * abad_side_sign[i + leg_0]) +
-        abad_offset[i + leg_0];
+        (cmd->q_des_abad[i + leg_0] * abad_side_sign[i + leg_0]) + abad_offset[i + leg_0];
     spine_cmd->q_des_hip[i] =
-        (cmd->q_des_hip[i + leg_0] * hip_side_sign[i + leg_0]) +
-        hip_offset[i + leg_0];
+        (cmd->q_des_hip[i + leg_0] * hip_side_sign[i + leg_0]) + hip_offset[i + leg_0];
     spine_cmd->q_des_knee[i] =
-        (cmd->q_des_knee[i + leg_0] / knee_side_sign[i + leg_0]) +
-        knee_offset[i + leg_0];
+        (cmd->q_des_knee[i + leg_0] / knee_side_sign[i + leg_0]) + knee_offset[i + leg_0];
 
     spine_cmd->qd_des_abad[i] =
         cmd->qd_des_abad[i + leg_0] * abad_side_sign[i + leg_0];
@@ -270,72 +338,468 @@ void spine_to_spi(spi_data_t *data, spine_data_t *spine_data, int leg_0) {
            spine_data->checksum);
 }
 
+static const unsigned char dlc2len[] = {0, 1, 2, 3, 4, 5, 6, 7,
+					8, 12, 16, 20, 24, 32, 48, 64};
+
+static const unsigned char len2dlc[] = {0, 1, 2, 3, 4, 5, 6, 7, 8,		/* 0 - 8 */
+					9, 9, 9, 9,				/* 9 - 12 */
+					10, 10, 10, 10,				/* 13 - 16 */
+					11, 11, 11, 11,				/* 17 - 20 */
+					12, 12, 12, 12,				/* 21 - 24 */
+					13, 13, 13, 13, 13, 13, 13, 13,		/* 25 - 32 */
+					14, 14, 14, 14, 14, 14, 14, 14,		/* 33 - 40 */
+					14, 14, 14, 14, 14, 14, 14, 14,		/* 41 - 48 */
+					15, 15, 15, 15, 15, 15, 15, 15,		/* 49 - 56 */
+					15, 15, 15, 15, 15, 15, 15, 15};	/* 57 - 64 */
+
+unsigned char can_fd_dlc2len(unsigned char dlc)
+{
+	return dlc2len[dlc & 0x0F];
+}
+
+unsigned char can_fd_len2dlc(unsigned char len)
+{
+	if (len > 64)
+		return 0xF;
+
+	return len2dlc[len];
+}
+
+int packFloat(void *buf, float x) {
+    unsigned char *b = (unsigned char *)buf;
+    unsigned char *p = (unsigned char *) &x;
+#if defined MSB
+    b[0] = p[3];
+    b[1] = p[2];
+    b[2] = p[1];
+    b[3] = p[0];
+#else
+    b[0] = p[0];
+    b[1] = p[1];
+    b[2] = p[2];
+    b[3] = p[3];
+#endif
+    return 4;
+}
+
+float unpackFloat(const void *buf) 
+{
+    float n;
+    memcpy(&n, buf, 4);
+
+    return n;
+}
+
 /*!
  * send receive data and command from spine
  */
-void spi_send_receive(spi_command_t *command, spi_data_t *data) {
+void can_send_receive(spi_command_t *command, spi_data_t *data) 
+{
   // update driver status flag
   spi_driver_iterations++;
   data->spi_driver_status = spi_driver_iterations << 16;
 
-  // transmit and receive buffers
-  uint16_t tx_buf[K_WORDS_PER_MESSAGE];
-  uint16_t rx_buf[K_WORDS_PER_MESSAGE];
+  //std::cout << (float)command->qd_des_abad[0] << " " << (float)command->qd_des_knee[0] << " " << (float)command->q_des_hip[0] << std::endl;
 
-  for (int spi_board = 0; spi_board < 2; spi_board++) {
-    // copy command into spine type:
-    spi_to_spine(command, &g_spine_cmd, spi_board * 2);
+  #define leg0 0
+  #define sign0 -1.0f
 
-    // pointers to command/data spine array
-    uint16_t *cmd_d = (uint16_t *)&g_spine_cmd;
-    uint16_t *data_d = (uint16_t *)&g_spine_data;
+  #define leg1 1
+  #define sign1 -1.0f
 
-    // zero rx buffer
-    memset(rx_buf, 0, K_WORDS_PER_MESSAGE * sizeof(uint16_t));
+  #define leg2 2
+  #define sign2 -1.0f
 
-    // copy into tx buffer flipping bytes
-    for (int i = 0; i < K_WORDS_PER_MESSAGE; i++)
-      tx_buf[i] = (cmd_d[i] >> 8) + ((cmd_d[i] & 0xff) << 8);
-    // tx_buf[i] = __bswap_16(cmd_d[i]);
+  #define leg3 3
+  #define sign3 -1.0f  
 
-    // each word is two bytes long
-    size_t word_len = 2;  // 16 bit word
+  float TH_set = 0;
+  float VE_set = 0;
+  float Kp = 0;
+  float Kd = 0;
+  float TQ_set = 0;
 
-    // spi message struct
-    struct spi_ioc_transfer spi_message[1];
+  canfd_frame frame;
 
-    // zero message struct.
-    memset(spi_message, 0, 1 * sizeof(struct spi_ioc_transfer));
+  TH_set = command->q_des_knee[leg0]; // output shaft mechanical angle setpoint, rad
+  VE_set = command->qd_des_knee[leg0]; // output shaft velocity setpoint, rad/s
+  Kp =     command->kp_knee[leg0];     // coefficient at angle error, N/rad
+  Kd =     command->kd_knee[leg0];     // coefficient at velocity error, N/(rad/s)
+  TQ_set = command->tau_knee_ff[leg0]; // torque setpoint, N
 
-    // set up message struct
-    for (int i = 0; i < 1; i++) {
-      spi_message[i].bits_per_word = spi_bits_per_word;
-      spi_message[i].cs_change = 1;
-      spi_message[i].delay_usecs = 0;
-      spi_message[i].len = word_len * 66;
-      spi_message[i].rx_buf = (uint64_t)rx_buf;
-      spi_message[i].tx_buf = (uint64_t)tx_buf;
-    }
+  frame.can_id = 0x10*10 + 0x08;
+  frame.len = 20;
+  frame.len = can_fd_dlc2len(can_fd_len2dlc(frame.len)); //ensure discrete CAN FD length values
 
-    // do spi communication
-    int rv = ioctl(spi_board == 0 ? spi_1_fd : spi_2_fd, SPI_IOC_MESSAGE(1),
-                   &spi_message);
-    (void)rv;
+  packFloat(frame.data, sign0*TH_set);
+  packFloat(&frame.data[4], sign0*VE_set);
+  packFloat(&frame.data[8], Kp);
+  packFloat(&frame.data[12], Kd);
+  packFloat(&frame.data[16], sign0*TQ_set);
 
-    // flip bytes the other way
-    for (int i = 0; i < 30; i++)
-      data_d[i] = (rx_buf[i] >> 8) + ((rx_buf[i] & 0xff) << 8);
-    // data_d[i] = __bswap_16(rx_buf[i]);
+  if (write(s, &frame, CANFD_MTU) != CANFD_MTU) { perror("Write");} // CANFD_MTU = 72    
 
-    // copy back to data
-    spine_to_spi(data, &g_spine_data, spi_board * 2);
+  TH_set = command->q_des_hip[leg0]; // output shaft mechanical angle setpoint, rad
+  VE_set = command->qd_des_hip[leg0]; // output shaft velocity setpoint, rad/s
+  Kp =     command->kp_hip[leg0];     // coefficient at angle error, N/rad
+  Kd =     command->kd_hip[leg0];     // coefficient at velocity error, N/(rad/s)
+  TQ_set = command->tau_hip_ff[leg0]; // torque setpoint, N
+
+  frame.can_id = 0x10*11 + 0x08;
+  frame.len = 20;
+  frame.len = can_fd_dlc2len(can_fd_len2dlc(frame.len)); //ensure discrete CAN FD length values
+
+  packFloat(frame.data, sign0*TH_set);
+  packFloat(&frame.data[4], sign0*VE_set);
+  packFloat(&frame.data[8], Kp);
+  packFloat(&frame.data[12], Kd);
+  packFloat(&frame.data[16], sign0*TQ_set);
+
+  if (write(s, &frame, CANFD_MTU) != CANFD_MTU) { perror("Write");} // CANFD_MTU = 72      
+
+  TH_set = command->q_des_abad[leg0]; // output shaft mechanical angle setpoint, rad
+  VE_set = command->qd_des_abad[leg0]; // output shaft velocity setpoint, rad/s
+  Kp =     command->kp_abad[leg0];     // coefficient at angle error, N/rad
+  Kd =     command->kd_abad[leg0];     // coefficient at velocity error, N/(rad/s)
+  TQ_set = command->tau_abad_ff[leg0]; // torque setpoint, N
+
+  frame.can_id = 0x10*12 + 0x08;
+  frame.len = 20;
+  frame.len = can_fd_dlc2len(can_fd_len2dlc(frame.len)); //ensure discrete CAN FD length values
+
+  packFloat(frame.data, sign0*TH_set);
+  packFloat(&frame.data[4], sign0*VE_set);
+  packFloat(&frame.data[8], Kp);
+  packFloat(&frame.data[12], Kd);
+  packFloat(&frame.data[16], sign0*TQ_set);
+
+  if (write(s, &frame, CANFD_MTU) != CANFD_MTU) { perror("Write");} // CANFD_MTU = 72   
+
+  /********************************************************************************************************/
+
+  TH_set = command->q_des_knee[leg1]; // output shaft mechanical angle setpoint, rad
+  VE_set = command->qd_des_knee[leg1]; // output shaft velocity setpoint, rad/s
+  Kp =     command->kp_knee[leg1];     // coefficient at angle error, N/rad
+  Kd =     command->kd_knee[leg1];     // coefficient at velocity error, N/(rad/s)
+  TQ_set = command->tau_knee_ff[leg1]; // torque setpoint, N
+
+  frame.can_id = 0x10*20 + 0x08;
+  frame.len = 20;
+  frame.len = can_fd_dlc2len(can_fd_len2dlc(frame.len)); //ensure discrete CAN FD length values
+
+  packFloat(frame.data, sign1*TH_set);
+  packFloat(&frame.data[4], sign1*VE_set);
+  packFloat(&frame.data[8], Kp);
+  packFloat(&frame.data[12], Kd);
+  packFloat(&frame.data[16], sign1*TQ_set);
+
+  if (write(s1, &frame, CANFD_MTU) != CANFD_MTU) { perror("Write");} // CANFD_MTU = 72    
+
+  TH_set = command->q_des_hip[leg1]; // output shaft mechanical angle setpoint, rad
+  VE_set = command->qd_des_hip[leg1]; // output shaft velocity setpoint, rad/s
+  Kp =     command->kp_hip[leg1];     // coefficient at angle error, N/rad
+  Kd =     command->kd_hip[leg1];     // coefficient at velocity error, N/(rad/s)
+  TQ_set = command->tau_hip_ff[leg1]; // torque setpoint, N
+
+  frame.can_id = 0x10*21 + 0x08;
+  frame.len = 20;
+  frame.len = can_fd_dlc2len(can_fd_len2dlc(frame.len)); //ensure discrete CAN FD length values
+
+  packFloat(frame.data, sign1*TH_set);
+  packFloat(&frame.data[4], sign1*VE_set);
+  packFloat(&frame.data[8], Kp);
+  packFloat(&frame.data[12], Kd);
+  packFloat(&frame.data[16], sign1*TQ_set);
+
+  if (write(s1, &frame, CANFD_MTU) != CANFD_MTU) { perror("Write");} // CANFD_MTU = 72      
+
+  TH_set = command->q_des_abad[leg1]; // output shaft mechanical angle setpoint, rad
+  VE_set = command->qd_des_abad[leg1]; // output shaft velocity setpoint, rad/s
+  Kp =     command->kp_abad[leg1];     // coefficient at angle error, N/rad
+  Kd =     command->kd_abad[leg1];     // coefficient at velocity error, N/(rad/s)
+  TQ_set = command->tau_abad_ff[leg1]; // torque setpoint, N
+
+  frame.can_id = 0x10*22 + 0x08;
+  frame.len = 20;
+  frame.len = can_fd_dlc2len(can_fd_len2dlc(frame.len)); //ensure discrete CAN FD length values
+
+  packFloat(frame.data, sign1*TH_set);
+  packFloat(&frame.data[4], sign1*VE_set);
+  packFloat(&frame.data[8], Kp);
+  packFloat(&frame.data[12], Kd);
+  packFloat(&frame.data[16], sign1*TQ_set);
+
+  if (write(s1, &frame, CANFD_MTU) != CANFD_MTU) { perror("Write");} // CANFD_MTU = 72   
+
+  /********************************************************************************************************/
+
+  TH_set = command->q_des_knee[leg2]; // output shaft mechanical angle setpoint, rad
+  VE_set = command->qd_des_knee[leg2]; // output shaft velocity setpoint, rad/s
+  Kp =     command->kp_knee[leg2];     // coefficient at angle error, N/rad
+  Kd =     command->kd_knee[leg2];     // coefficient at velocity error, N/(rad/s)
+  TQ_set = command->tau_knee_ff[leg2]; // torque setpoint, N
+
+  frame.can_id = 0x10*30 + 0x08;
+  frame.len = 20;
+  frame.len = can_fd_dlc2len(can_fd_len2dlc(frame.len)); //ensure discrete CAN FD length values
+
+  packFloat(frame.data, sign2*TH_set);
+  packFloat(&frame.data[4], sign2*VE_set);
+  packFloat(&frame.data[8], Kp);
+  packFloat(&frame.data[12], Kd);
+  packFloat(&frame.data[16], sign2*TQ_set);
+
+  if (write(s2, &frame, CANFD_MTU) != CANFD_MTU) { perror("Write");} // CANFD_MTU = 72    
+
+  TH_set = command->q_des_hip[leg2]; // output shaft mechanical angle setpoint, rad
+  VE_set = command->qd_des_hip[leg2]; // output shaft velocity setpoint, rad/s
+  Kp =     command->kp_hip[leg2];     // coefficient at angle error, N/rad
+  Kd =     command->kd_hip[leg2];     // coefficient at velocity error, N/(rad/s)
+  TQ_set = command->tau_hip_ff[leg2]; // torque setpoint, N
+
+  frame.can_id = 0x10*31 + 0x08;
+  frame.len = 20;
+  frame.len = can_fd_dlc2len(can_fd_len2dlc(frame.len)); //ensure discrete CAN FD length values
+
+  packFloat(frame.data, sign2*TH_set);
+  packFloat(&frame.data[4], sign2*VE_set);
+  packFloat(&frame.data[8], Kp);
+  packFloat(&frame.data[12], Kd);
+  packFloat(&frame.data[16], sign2*TQ_set);
+
+  if (write(s2, &frame, CANFD_MTU) != CANFD_MTU) { perror("Write");} // CANFD_MTU = 72      
+
+  TH_set = command->q_des_abad[leg2]; // output shaft mechanical angle setpoint, rad
+  VE_set = command->qd_des_abad[leg2]; // output shaft velocity setpoint, rad/s
+  Kp =     command->kp_abad[leg2];     // coefficient at angle error, N/rad
+  Kd =     command->kd_abad[leg2];     // coefficient at velocity error, N/(rad/s)
+  TQ_set = command->tau_abad_ff[leg2]; // torque setpoint, N
+
+  frame.can_id = 0x10*32 + 0x08;
+  frame.len = 20;
+  frame.len = can_fd_dlc2len(can_fd_len2dlc(frame.len)); //ensure discrete CAN FD length values
+
+  packFloat(frame.data, sign2*TH_set);
+  packFloat(&frame.data[4], sign2*VE_set);
+  packFloat(&frame.data[8], Kp);
+  packFloat(&frame.data[12], Kd);
+  packFloat(&frame.data[16], sign2*TQ_set);
+
+  if (write(s2, &frame, CANFD_MTU) != CANFD_MTU) { perror("Write");} // CANFD_MTU = 72   
+
+  /********************************************************************************************************/
+
+  TH_set = command->q_des_knee[leg3]; // output shaft mechanical angle setpoint, rad
+  VE_set = command->qd_des_knee[leg3]; // output shaft velocity setpoint, rad/s
+  Kp =     command->kp_knee[leg3];     // coefficient at angle error, N/rad
+  Kd =     command->kd_knee[leg3];     // coefficient at velocity error, N/(rad/s)
+  TQ_set = command->tau_knee_ff[leg3]; // torque setpoint, N
+
+  frame.can_id = 0x10*40 + 0x08;
+  frame.len = 20;
+  frame.len = can_fd_dlc2len(can_fd_len2dlc(frame.len)); //ensure discrete CAN FD length values
+
+  packFloat(frame.data, sign3*TH_set);
+  packFloat(&frame.data[4], sign3*VE_set);
+  packFloat(&frame.data[8], Kp);
+  packFloat(&frame.data[12], Kd);
+  packFloat(&frame.data[16], sign3*TQ_set);
+
+  if (write(s3, &frame, CANFD_MTU) != CANFD_MTU) { perror("Write");} // CANFD_MTU = 72    
+
+  TH_set = command->q_des_hip[leg3]; // output shaft mechanical angle setpoint, rad
+  VE_set = command->qd_des_hip[leg3]; // output shaft velocity setpoint, rad/s
+  Kp =     command->kp_hip[leg3];     // coefficient at angle error, N/rad
+  Kd =     command->kd_hip[leg3];     // coefficient at velocity error, N/(rad/s)
+  TQ_set = command->tau_hip_ff[leg3]; // torque setpoint, N
+
+  frame.can_id = 0x10*41 + 0x08;
+  frame.len = 20;
+  frame.len = can_fd_dlc2len(can_fd_len2dlc(frame.len)); //ensure discrete CAN FD length values
+
+  packFloat(frame.data, sign3*TH_set);
+  packFloat(&frame.data[4], sign3*VE_set);
+  packFloat(&frame.data[8], Kp);
+  packFloat(&frame.data[12], Kd);
+  packFloat(&frame.data[16], sign3*TQ_set);
+
+  if (write(s3, &frame, CANFD_MTU) != CANFD_MTU) { perror("Write");} // CANFD_MTU = 72      
+
+  TH_set = command->q_des_abad[leg3]; // output shaft mechanical angle setpoint, rad
+  VE_set = command->qd_des_abad[leg3]; // output shaft velocity setpoint, rad/s
+  Kp =     command->kp_abad[leg3];     // coefficient at angle error, N/rad
+  Kd =     command->kd_abad[leg3];     // coefficient at velocity error, N/(rad/s)
+  TQ_set = command->tau_abad_ff[leg3]; // torque setpoint, N
+
+  frame.can_id = 0x10*42 + 0x08;
+  frame.len = 20;
+  frame.len = can_fd_dlc2len(can_fd_len2dlc(frame.len)); //ensure discrete CAN FD length values
+
+  packFloat(frame.data, sign3*TH_set);
+  packFloat(&frame.data[4], sign3*VE_set);
+  packFloat(&frame.data[8], Kp);
+  packFloat(&frame.data[12], Kd);
+  packFloat(&frame.data[16], sign3*TQ_set);
+
+  if (write(s3, &frame, CANFD_MTU) != CANFD_MTU) { perror("Write");} // CANFD_MTU = 72   
+
+  /********************************************************************************************************/  
+
+  /// real-time variables actual values
+  float TH_act = 0; // output shaft mechanical angle reading, rad
+  float VE_act = 0; // output shaft velocity reading, rad/s
+  //float TQ_act = 0; // torque reading, N
+
+  canfd_frame rx_frame;
+
+  for( int i = 0; i < 3; i++)
+  {
+    int suka = read(s, &rx_frame, CANFD_MTU); // CANFD_MTU = 72
+    suka += 1;
+    uint8_t device_id = rx_frame.can_id / 0x10; // get responding device Id
+
+    TH_act = unpackFloat(rx_frame.data);
+    VE_act = unpackFloat(&rx_frame.data[4]);    
+
+    switch ( device_id )
+    {
+      case 10:
+        data->q_knee[leg0] = sign0*TH_act;
+        data->qd_knee[leg0] = sign0*VE_act;
+        break;
+
+      case 11:
+        data->q_hip[leg0] = sign0*TH_act;
+        data->qd_hip[leg0] = sign0*VE_act;   
+        break;
+
+      case 12:
+        data->q_abad[leg0] = sign0*TH_act;
+        data->qd_abad[leg0] = sign0*VE_act;   
+        break;      
+    }   
   }
+
+  for( int i = 0; i < 3; i++)
+  {
+    int suka = read(s1, &rx_frame, CANFD_MTU); // CANFD_MTU = 72
+    suka += 1;
+    uint8_t device_id = rx_frame.can_id / 0x10; // get responding device Id
+
+    TH_act = unpackFloat(rx_frame.data);
+    VE_act = unpackFloat(&rx_frame.data[4]);    
+
+    switch ( device_id )
+    {
+      case 20:
+        data->q_knee[leg1] = sign1*TH_act;
+        data->qd_knee[leg1] = sign1*VE_act;
+        break;
+
+      case 21:
+        data->q_hip[leg1] = sign1*TH_act;
+        data->qd_hip[leg1] = sign1*VE_act;   
+        break;
+
+      case 22:
+        data->q_abad[leg1] = sign1*TH_act;
+        data->qd_abad[leg1] = sign1*VE_act;   
+        break;      
+    }   
+  }  
+
+  for( int i = 0; i < 3; i++)
+  {
+    int suka = read(s2, &rx_frame, CANFD_MTU); // CANFD_MTU = 72
+    suka += 1;
+    uint8_t device_id = rx_frame.can_id / 0x10; // get responding device Id
+
+    TH_act = unpackFloat(rx_frame.data);
+    VE_act = unpackFloat(&rx_frame.data[4]);    
+
+    switch ( device_id )
+    {
+      case 30:
+        data->q_knee[leg3] = sign3*TH_act;
+        data->qd_knee[leg3] = sign3*VE_act;
+        break;
+
+      case 31:
+        data->q_hip[leg3] = sign3*TH_act;
+        data->qd_hip[leg3] = sign3*VE_act;   
+        break;
+
+      case 32:
+        data->q_abad[leg3] = sign3*TH_act;
+        data->qd_abad[leg3] = sign3*VE_act;   
+        break;      
+    }   
+  }
+
+  for( int i = 0; i < 3; i++)
+  {
+    int suka = read(s3, &rx_frame, CANFD_MTU); // CANFD_MTU = 72
+    suka += 1;
+    uint8_t device_id = rx_frame.can_id / 0x10; // get responding device Id
+
+    TH_act = unpackFloat(rx_frame.data);
+    VE_act = unpackFloat(&rx_frame.data[4]);    
+
+    switch ( device_id )
+    {
+      case 40:
+        data->q_knee[leg2] = leg2*TH_act;
+        data->qd_knee[leg2] = leg2*VE_act;
+        break;
+
+      case 41:
+        data->q_hip[leg2] = leg2*TH_act;
+        data->qd_hip[leg2] = leg2*VE_act;   
+        break;
+
+      case 42:
+        data->q_abad[leg2] = leg2*TH_act;
+        data->qd_abad[leg2] = leg2*VE_act;   
+        break;      
+    }       
+  }    
+
+  data->q_hip[0] = command->q_des_hip[0];
+  data->q_hip[1] = command->q_des_hip[1];
+  //data->q_hip[2] = command->q_des_hip[2];
+  //data->q_hip[3] = command->q_des_hip[3];
+
+  data->qd_hip[0] = command->qd_des_hip[0];
+  data->qd_hip[1] = command->qd_des_hip[1];
+  //data->qd_hip[2] = command->qd_des_hip[2];
+  //data->qd_hip[3] = command->qd_des_hip[3];
+
+  data->q_abad[0] = command->q_des_abad[0];
+  data->q_abad[1] = command->q_des_abad[1];
+  //data->q_abad[2] = command->q_des_abad[2];
+  //data->q_abad[3] = command->q_des_abad[3];
+
+  data->qd_abad[0] = command->qd_des_abad[0];
+  data->qd_abad[1] = command->qd_des_abad[1];
+  //data->qd_abad[2] = command->qd_des_abad[2];
+  //data->qd_abad[3] = command->qd_des_abad[3];
+
+  data->q_knee[0] = command->q_des_knee[0];
+  data->q_knee[1] = command->q_des_knee[1];
+  //data->q_knee[2] = command->q_des_knee[2];
+  //data->q_knee[3] = command->q_des_knee[3];
+
+  data->qd_knee[0] = command->qd_des_knee[0];
+  data->qd_knee[1] = command->qd_des_knee[1];
+  //data->qd_knee[2] = command->qd_des_knee[2];
+  //data->qd_knee[3] = command->qd_des_knee[3];
+  
 }
 
 /*!
  * Run SPI
  */
-void spi_driver_run() {
+void can_driver_run() {
   // do spi board calculations
   for (int i = 0; i < 4; i++) {
     fake_spine_control(&spi_command_drv, &spi_data_drv, &spi_torque, i);
@@ -343,20 +807,20 @@ void spi_driver_run() {
 
   // in here, the driver is good
   pthread_mutex_lock(&spi_mutex);
-  spi_send_receive(&spi_command_drv, &spi_data_drv);
+  can_send_receive(&spi_command_drv, &spi_data_drv);
   pthread_mutex_unlock(&spi_mutex);
 }
 
 /*!
  * Get the spi command
  */
-spi_command_t *get_spi_command() {
+spi_command_t *get_can_command() {
   return &spi_command_drv;
 }
 
 /*!
  * Get the spi data
  */
-spi_data_t *get_spi_data() { return &spi_data_drv; }
+spi_data_t *get_can_data() { return &spi_data_drv; }
 
 #endif

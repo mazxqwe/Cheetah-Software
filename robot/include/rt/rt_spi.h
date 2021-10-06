@@ -3,8 +3,8 @@
  * @brief SPI communication to spine board
  */
 
-#ifndef _rt_spi
-#define _rt_spi
+#ifndef _rt_can
+#define _rt_can
 
 #ifdef linux
 
@@ -31,6 +31,17 @@ extern "C" {
 #include <spi_data_t.hpp>
 #include <spi_torque_t.hpp>
 
+#include <linux/can.h>
+#include <linux/can/raw.h>
+
+#include <cstring>
+#include <iostream>
+using namespace std;
+
+#include <net/if.h>
+#include <sys/socket.h>
+#include <iostream>
+
 #define K_EXPECTED_COMMAND_SIZE 256
 #define K_WORDS_PER_MESSAGE 66
 #define K_EXPECTED_DATA_SIZE 116
@@ -43,13 +54,13 @@ extern "C" {
       (byte & 0x08 ? '1' : '0'), (byte & 0x04 ? '1' : '0'), \
       (byte & 0x02 ? '1' : '0'), (byte & 0x01 ? '1' : '0')
 
-void init_spi();
+void init_can();
 
-void spi_send_receive(spi_command_t* command, spi_data_t* data);
-void spi_driver_run();
+void can_send_receive(spi_command_t* command, spi_data_t* data);
+void can_driver_run();
 
-spi_data_t* get_spi_data();
-spi_command_t* get_spi_command();
+spi_data_t* get_can_data();
+spi_command_t* get_can_command();
 
 /*!
  * SPI command message

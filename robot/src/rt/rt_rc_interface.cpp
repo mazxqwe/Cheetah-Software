@@ -72,44 +72,32 @@ void ROS_command_sub()
 
 
 /*
-
-
   int selected_mode = 0;
-
   switch(estop_switch) {
-
     case SWITCH_UP: // ESTOP
       selected_mode = RC_mode::OFF;
       break;
-
     case SWITCH_MIDDLE: // recover
       selected_mode = RC_mode::RECOVERY_STAND;
       break;
-
     case SWITCH_DOWN: // run 
       selected_mode = RC_mode::LOCOMOTION; // locomotion by default
-
       // stand mode
       if(left_select == SWITCH_UP && right_select == SWITCH_UP) {
         selected_mode = RC_mode::QP_STAND;
       }
-
       if(backflip_prep_edge_trigger.trigger(mode_selection_switch) 
           && mode_selection_switch == SWITCH_MIDDLE) {
         initial_mode_go_switch = mode_go_switch;
       }
-
       // Experiment mode (two leg stance, vision, ...)
       if(experiment_prep_edge_trigger.trigger(mode_selection_switch) 
           && mode_selection_switch == SWITCH_DOWN) {
         initial_mode_go_switch = mode_go_switch;
       }
-
-
       // backflip
       if(mode_selection_switch == SWITCH_MIDDLE) {
         selected_mode = RC_mode::BACKFLIP_PRE;
-
         if(mode_go_switch == SWITCH_DOWN && initial_mode_go_switch != SWITCH_DOWN) {
           selected_mode = RC_mode::BACKFLIP;
         } else if(mode_go_switch == SWITCH_UP) {
@@ -118,7 +106,6 @@ void ROS_command_sub()
       } // Experiment Mode
       else if(mode_selection_switch == SWITCH_DOWN){
         int mode_id = left_select * 3 + right_select;
-
         if(mode_id == 0){ // Two leg stance
           selected_mode = RC_mode::TWO_LEG_STANCE_PRE;
           if(mode_go_switch == SWITCH_DOWN && initial_mode_go_switch != SWITCH_DOWN) {
@@ -131,10 +118,8 @@ void ROS_command_sub()
           selected_mode = RC_mode::VISION;
         }
       }
-
       // gait selection
       int mode_id = left_select * 3 + right_select;
-
       constexpr int gait_table[9] = {0, //stand
         0, // trot
         1, // bounding
@@ -145,7 +130,6 @@ void ROS_command_sub()
         7, // walk2?
         8, // pace
   };
-
 */
 
 void *v_memcpy(void *dest, volatile void *src, size_t n) {
@@ -161,5 +145,3 @@ float deadband(float command, float deadbandRegion, float minVal, float maxVal){
     return (command / (2)) * (maxVal - minVal);
   }
 }
-
-
