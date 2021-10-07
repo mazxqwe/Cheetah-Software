@@ -16,7 +16,7 @@
  */
 template <typename T>
 FSM_State_RecoveryStand<T>::FSM_State_RecoveryStand(ControlFSMData<T>* _controlFSMData)
-    : FSM_State<T>(_controlFSMData, FSM_StateName::STAND_UP, "STAND_UP"){
+    : FSM_State<T>(_controlFSMData, FSM_StateName::RECOVERY_STAND, "RECOVERY_STAND"){
   // Do nothing
   // Set the pre controls safety checks
   this->checkSafeOrientation = false;
