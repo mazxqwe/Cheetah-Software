@@ -19,6 +19,7 @@
 
 #include "SimUtilities/GamepadCommand.h"
 #include "robot/include/rt/rt_rc_interface.h"
+#include "robot/include/rt/rt_ros_interface.h"
 
 /**
  *

@@ -7,6 +7,7 @@
 
 #include "ControlFSM.h"
 #include <rt/rt_rc_interface.h>
+#include <rt/rt_ros_interface.h>
 
 /**
  * Constructor for the Control FSM. Passes in all of the necessary

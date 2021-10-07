@@ -8,6 +8,7 @@
 #include "Utilities/SegfaultHandler.h"
 #include "Controllers/LegController.h"
 #include "rt/rt_rc_interface.h"
+#include "rt/rt_ros_interface.h"
 #include "rt/rt_sbus.h"
 
 /*!
