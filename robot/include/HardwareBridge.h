@@ -38,8 +38,8 @@ class HardwareBridge {
  public:
   HardwareBridge(RobotController* robot_ctrl)
       : statusTask(&taskManager, 0.5f),
-        _interfaceLCM(getLcmUrl(255)),
-        _visualizationLCM(getLcmUrl(255)) {
+        _interfaceLCM(getLcmUrl(0)),
+        _visualizationLCM(getLcmUrl(0)) {
     _controller = robot_ctrl;
     _userControlParameters = robot_ctrl->getUserControlParameters();
         }
@@ -47,8 +47,11 @@ class HardwareBridge {
   void setupScheduler();
   void initError(const char* reason, bool printErrno = false);
   void initCommon();
-  ~HardwareBridge() { delete _robotRunner; }
-  void handleGamepadLCM(const lcm::ReceiveBuffer* rbuf, const std::string& chan,
+  ~HardwareBridge() 
+  { 
+    delete _robotRunner; 
+  }
+  void handleMoveCommandLCM(const lcm::ReceiveBuffer* rbuf, const std::string& chan,
                         const gamepad_lcmt* msg);
 
   void handleInterfaceLCM();
@@ -97,7 +100,6 @@ class MiniCheetahHardwareBridge : public HardwareBridge {
   void run();
   void runMicrostrain();
   void logMicrostrain();
-  void ROS_connect_as_rc();
   void abort(const std::string& reason);
   void abort(const char* reason);
 

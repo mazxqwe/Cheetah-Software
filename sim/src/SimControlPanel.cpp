@@ -75,11 +75,11 @@ SimControlPanel::SimControlPanel(QWidget* parent)
       ui(new Ui::SimControlPanel),
       _userParameters("user-parameters"),
       _terrainFileName(getConfigDirectoryPath() + DEFAULT_TERRAIN_FILE),
-      _heightmapLCM(getLcmUrl(255)),
-      _pointsLCM(getLcmUrl(255)),
-      _indexmapLCM(getLcmUrl(255)),
-      _ctrlVisionLCM(getLcmUrl(255)),
-      _miniCheetahDebugLCM(getLcmUrl(255))
+      _heightmapLCM(getLcmUrl(0)),
+      _pointsLCM(getLcmUrl(0)),
+      _indexmapLCM(getLcmUrl(0)),
+      _ctrlVisionLCM(getLcmUrl(0)),
+      _miniCheetahDebugLCM(getLcmUrl(0))
 {
 
   ui->setupUi(this); // QT setup

@@ -9,7 +9,7 @@
 
 class MiniCheetahSpi_Controller : public RobotController {
 public:
-  MiniCheetahSpi_Controller():RobotController(), _lcm(getLcmUrl(255)) {
+  MiniCheetahSpi_Controller():RobotController(), _lcm(getLcmUrl(0)) {
 
     _lcm.subscribe("spi_debug_cmd", &MiniCheetahSpi_Controller::handleLcm, this);
     _lcmThread = std::thread([&](){

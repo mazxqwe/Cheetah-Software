@@ -15,6 +15,7 @@
 
 #include "HardwareBridge.h"
 #include "rt/rt_rc_interface.h"
+#include "rt/rt_ros_interface.h"
 #include "rt/rt_spi.h"
 #include "rt/rt_vectornav.h"
 #include "rt/rt_ethercat.h"
@@ -51,7 +52,7 @@ void HardwareBridge::initCommon() {
   }
 
   printf("[HardwareBridge] Subscribe LCM\n");
-  _interfaceLCM.subscribe("interface", &HardwareBridge::handleGamepadLCM, this);
+  _interfaceLCM.subscribe("interface", &HardwareBridge::handleMoveCommandLCM, this);
   _interfaceLCM.subscribe("interface_request",
                           &HardwareBridge::handleControlParameter, this);
 
@@ -101,7 +102,7 @@ void HardwareBridge::setupScheduler() {
 /*!
  * LCM Handler for gamepad message
  */
-void HardwareBridge::handleGamepadLCM(const lcm::ReceiveBuffer* rbuf,
+void HardwareBridge::handleMoveCommandLCM(const lcm::ReceiveBuffer* rbuf,
                                       const std::string& chan,
                                       const gamepad_lcmt* msg) {
   (void)rbuf;
@@ -226,7 +227,7 @@ void HardwareBridge::handleControlParameter(
 
 
 MiniCheetahHardwareBridge::MiniCheetahHardwareBridge(RobotController* robot_ctrl, bool load_parameters_from_file)
-    : HardwareBridge(robot_ctrl), _spiLcm(getLcmUrl(255)), _microstrainLcm(getLcmUrl(255)) {
+    : HardwareBridge(robot_ctrl), _spiLcm(getLcmUrl(0)), _microstrainLcm(getLcmUrl(0)) {
   _load_parameters_from_file = load_parameters_from_file;
 }
 
@@ -355,6 +356,7 @@ void MiniCheetahHardwareBridge::run() {
 
 
   ROS_thread = new std::thread(&MiniCheetahHardwareBridge::ROS_connect_as_rc, this);
+  ROS_thread->detach();
 
   for (;;) {
     usleep(1000000);
@@ -532,7 +534,7 @@ void HardwareBridge::publishVisualizationLCM() {
   _visualizationLCM.publish("main_cheetah_visualization", &visualization_data);
 }
 
-Cheetah3HardwareBridge::Cheetah3HardwareBridge(RobotController *rc) : HardwareBridge(rc),  _ecatLCM(getLcmUrl(255)) {
+Cheetah3HardwareBridge::Cheetah3HardwareBridge(RobotController *rc) : HardwareBridge(rc),  _ecatLCM(getLcmUrl(0)) {
 
 }
 

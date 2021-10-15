@@ -1,9 +1,14 @@
-#include "RobotInterface.h"
 #include <ControlParameters/ControlParameterInterface.h>
 #include <Dynamics/Cheetah3.h>
 #include <Dynamics/MiniCheetah.h>
 #include <unistd.h>
 #include "ControlParameters/SimulatorParameters.h"
+
+#include <rt/rt_ros_interface.h>
+#include <string.h> // memcpy
+#include <stdio.h>
+
+#include <iostream>
 
 RobotInterface::RobotInterface(RobotType robotType, Graphics3D *gfx,
                                PeriodicTaskManager *tm, ControlParameters& userParameters)
@@ -180,7 +185,7 @@ void RobotInterface::startInterface() {
   printf("[RobotInterface] Send parameters to robot...\n");
   for (auto &kv : _controlParameters.collection._map) {
     sendControlParameter(kv.first, kv.second->get(kv.second->_kind),
-                         kv.second->_kind, false);
+                         kv.second->_kind, falsen);
   }
 
   for (auto &kv : _userParameters.collection._map) {

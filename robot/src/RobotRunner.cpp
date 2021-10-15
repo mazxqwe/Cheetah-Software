@@ -22,7 +22,7 @@ RobotRunner::RobotRunner(RobotController* robot_ctrl,
     PeriodicTaskManager* manager, 
     float period, std::string name):
   PeriodicTask(manager, period, name),
-  _lcm(getLcmUrl(255)) {
+  _lcm(getLcmUrl(0)) {
 
     _robot_ctrl = robot_ctrl;
   }
