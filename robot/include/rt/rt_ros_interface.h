@@ -1,50 +1,88 @@
-/**
- * @file rt_ros_interface.h
- *
+/*!
+ * @file RobotInterface.h
+ * @brief Interface between simulator and hardware using LCM.
  */
-#ifndef _RT_ROS_INTERFACE
-#define _RT_ROS_INTERFACE
+
+#ifndef PROJECT_RT_ROS_INTERFACE_H
+#define PROJECT_RT_ROS_INTERFACE_H
+
+#include <ControlParameters/RobotParameters.h>
+#include <Dynamics/Quadruped.h>
+#include <Utilities/PeriodicTask.h>
+#include <cheetah_visualization_lcmt.hpp>
+#include <condition_variable>
+#include <lcm-cpp.hpp>
+#include <mutex>
+#include <thread>
+#include "Graphics3D.h"
+#include "control_parameter_request_lcmt.hpp"
+#include "control_parameter_respones_lcmt.hpp"
+#include "gamepad_lcmt.hpp"
+
+#include "RobotController.h"
+#include <lcm-cpp.hpp>
 
 #include "ros/ros.h"
 #include "geometry_msgs/Twist.h"
 #include "std_msgs/Int16.h"
 
-class rc_control_settings {
-  public:
-    double     mode;
-    double     p_des[2]; // (x, y) -1 ~ 1
-    double     height_variation; // -1 ~ 1
-    double     v_des[3]; // -1 ~ 1 * (scale 0.5 ~ 1.5)
-    double     rpy_des[3]; // -1 ~ 1
-    double     omega_des[3]; // -1 ~ 1
-    double     variable[3];
-};
+#define ROBOT_INTERFACE_UPDATE_PERIOD (1.f / 60.f)
+#define INTERFACE_LCM_NAME "interface"
+#define TIMES_TO_RESEND_CONTROL_PARAM 5
 
-class ROS_connect
-{
-  public:
+class RobotInterface : PeriodicTask {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+  RobotInterface(RobotType robotType, RobotController* robot_ctrl, PeriodicTaskManager* tm, ControlParameters& userParameters);
+  RobotControlParameters& getParams() { return _controlParameters; }
+  void startInterface();
+  void stopInterface();
+  void lcmHandler();
+  void sendControlParameter(const std::string& name,
+                            ControlParameterValue value,
+                            ControlParameterValueKind kind, bool isUser);
+
+  void handleControlParameter(const lcm::ReceiveBuffer* rbuf,
+                              const std::string& chan,
+                              const control_parameter_respones_lcmt* msg);
+
+  void handleVisualizationData(const lcm::ReceiveBuffer* rbuf,
+                               const std::string& chan,
+                               const cheetah_visualization_lcmt* msg);
+
   void init();
+  void run();
+  void cleanup() {}
+  virtual ~RobotInterface() {
+    delete _simulator;
+    stop();
+  }
 
-  private:
-  void ROS_control_mode_Callback(const std_msgs::Int16::ConstPtr& mode);
-  void ROS_twist_Callback(const geometry_msgs::Twist::ConstPtr& vel);
-}
+ private:
+  PeriodicTaskManager _taskManager;
+  gamepad_lcmt _gamepad_lcmt;
+  control_parameter_request_lcmt _parameter_request_lcmt;
+  bool _pendingControlParameterSend = false;
+  lcm::LCM _lcm;
+  uint64_t _robotID;
+  std::thread _lcmThread;
+  VisualizationData _visualizationData;
+  RobotController _robot_ctrl;
+  RobotControlParameters _controlParameters;
+  ControlParameters& _userParameters;
+  RobotType _robotType;
+  bool _running = false;
 
+  std::mutex _lcmMutex;
+  std::condition_variable _lcmCV;
+  bool _waitingForLcmResponse = false;
+  bool _lcmResponseBad = true;
 
-namespace RC_mode{
-  constexpr int OFF = 0;
-  constexpr int STAND_UP = 2;
-  constexpr int QP_STAND = 3;
-  constexpr int BACKFLIP_PRE = 4;
-  constexpr int BACKFLIP = 5;
-  constexpr int VISION = 6;
-  constexpr int LOCOMOTION = 11;
-  constexpr int RECOVERY_STAND = 12;
-
-  // Experiment Mode
-  constexpr int TWO_LEG_STANCE_PRE = 20;
-  constexpr int TWO_LEG_STANCE = 21;
-  constexpr int JP_TEST = 22;
+  // forward kinematics
+  Quadruped<double> _quadruped;
+  FloatingBaseModel<double> _model;
+  FBModelState<double> _fwdKinState;
 };
 
-#endif
+#endif  // PROJECT_ROBOTINTERFACE_H

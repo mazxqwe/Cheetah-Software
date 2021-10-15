@@ -1,41 +1,43 @@
 #include <pthread.h>
-#include <rt/rt_rc_interface.h>
+#include <rt/rt_ros_interface.h>
 #include "Utilities/EdgeTrigger.h"
 #include <string.h> // memcpy
 #include <stdio.h>
 #include <rt/rt_sbus.h>
 
-#include "ros/ros.h"
-#include "geometry_msgs/Twist.h"
-#include "std_msgs/Int16.h"
-
 #include <iostream>
 
+void ROS_connect::init()
+{
+  int a = 0;
+  char * b =nullptr;
+  ros::init(a, &b, "robodog_sub");
 
-static pthread_mutex_t lcm_get_set_mutex =
-PTHREAD_MUTEX_INITIALIZER; /**< mutex to protect gui settings coming over
-                             LCM */
+  ros::NodeHandle n;
 
-// Controller Settings
-rc_control_settings rc_control;
+  ROS_INFO("ROS node initialized");
 
-/* ------------------------- HANDLERS ------------------------- */
+  ros::AsyncSpinner spinner(1);
 
-// Controller Settings
-void get_rc_control_settings(void *settings) {
-  pthread_mutex_lock(&lcm_get_set_mutex);
-  v_memcpy(settings, &rc_control, sizeof(rc_control_settings));
-  pthread_mutex_unlock(&lcm_get_set_mutex);
+  spinner.start();
+
+  rc_control.mode = 1;
+
+  ros::Subscriber subt_rc_mode = n.subscribe("rc_mode", 100, ROS_controll_mode_Callback);
+
+  ros::Subscriber subtwist = n.subscribe("cmd_vel", 100, ROS_twist_Callback);
+
+  ros::waitForShutdown();
 }
 
 
-void ROS_controll_mode_Callback(const std_msgs::Int16::ConstPtr& mode)
+void ROS_connect::ROS_control_mode_Callback(const std_msgs::Int16::ConstPtr& mode)
 { 
   rc_control.mode = mode->data;
   std::cout<<"rc_mode:  "<<rc_control.mode<<std::endl;
 }
 
-void ROS_twist_Callback(const geometry_msgs::Twist::ConstPtr& vel)
+void ROS_connect::ROS_twist_Callback(const geometry_msgs::Twist::ConstPtr& vel)
 { 
   rc_control.v_des[0] = vel->linear.x;
   rc_control.v_des[1] = vel->linear.y;
@@ -46,38 +48,6 @@ void ROS_twist_Callback(const geometry_msgs::Twist::ConstPtr& vel)
   rc_control.rpy_des[2] = - vel->angular.z; //to align ROS linear basis
 }
 
-
-void ROS_param_Callback(const std_msgs::Int16::ConstPtr& param)
-{
-  std::cout<<param<<"LCM"<<std::endl;
-}
-
-
-void ROS_command_sub()
-{
-
-  int a = 0;
-  char * b =nullptr;
-  ros::init(a, &b, "robodog_sub");
-
-  ros::NodeHandle n;
-
-  ROS_INFO("Node initialized");
-
-  ros::AsyncSpinner spinner(1);
-
-  spinner.start();
-
-  rc_control.mode = 1;
-
-  ros::Subscriber sub_rc_mode = n.subscribe("rc_mode", 100, ROS_controll_mode_Callback);
-
-  ros::Subscriber subt_param = n.subscribe("dog_param", 100, ROS_param_Callback);
-
-  ros::Subscriber subtwist = n.subscribe("cmd_vel", 100, ROS_twist_Callback);
-
-  ros::waitForShutdown();
-}
 
 
 /*

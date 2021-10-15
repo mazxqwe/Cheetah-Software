@@ -1,126 +1,206 @@
-#include <pthread.h>
-#include <rt/rt_ros_interface.h>
-#include "Utilities/EdgeTrigger.h"
-#include <string.h> // memcpy
-#include <stdio.h>
-#include <rt/rt_sbus.h>
+#include "RobotInterface.h"
+#include <ControlParameters/ControlParameterInterface.h>
+#include <Dynamics/Cheetah3.h>
+#include <Dynamics/MiniCheetah.h>
+#include <unistd.h>
+#include "ControlParameters/SimulatorParameters.h"
 
-#include <iostream>
-
-void ROS_connect::init()
-{
-  int a = 0;
-  char * b =nullptr;
-  ros::init(a, &b, "robodog_sub");
-
-  ros::NodeHandle n;
-
-  ROS_INFO("ROS node initialized");
-
-  ros::AsyncSpinner spinner(1);
-
-  spinner.start();
-
-  rc_control.mode = 1;
-
-  ros::Subscriber subt_rc_mode = n.subscribe("rc_mode", 100, ROS_controll_mode_Callback);
-
-  ros::Subscriber subtwist = n.subscribe("cmd_vel", 100, ROS_twist_Callback);
-
-  ros::waitForShutdown();
-}
-
-
-void ROS_connect::ROS_control_mode_Callback(const std_msgs::Int16::ConstPtr& mode)
-{ 
-  rc_control.mode = mode->data;
-  std::cout<<"rc_mode:  "<<rc_control.mode<<std::endl;
-}
-
-void ROS_connect::ROS_twist_Callback(const geometry_msgs::Twist::ConstPtr& vel)
-{ 
-  rc_control.v_des[0] = vel->linear.x;
-  rc_control.v_des[1] = vel->linear.y;
-  rc_control.omega_des[2] = - vel->angular.z; //to align ROS linear basis
-  rc_control.height_variation = vel->linear.z;
-  rc_control.rpy_des[0] = vel->angular.x;
-  rc_control.rpy_des[1] = vel->angular.y;
-  rc_control.rpy_des[2] = - vel->angular.z; //to align ROS linear basis
-}
-
-
-
-/*
-  int selected_mode = 0;
-  switch(estop_switch) {
-    case SWITCH_UP: // ESTOP
-      selected_mode = RC_mode::OFF;
-      break;
-    case SWITCH_MIDDLE: // recover
-      selected_mode = RC_mode::RECOVERY_STAND;
-      break;
-    case SWITCH_DOWN: // run 
-      selected_mode = RC_mode::LOCOMOTION; // locomotion by default
-      // stand mode
-      if(left_select == SWITCH_UP && right_select == SWITCH_UP) {
-        selected_mode = RC_mode::QP_STAND;
-      }
-      if(backflip_prep_edge_trigger.trigger(mode_selection_switch) 
-          && mode_selection_switch == SWITCH_MIDDLE) {
-        initial_mode_go_switch = mode_go_switch;
-      }
-      // Experiment mode (two leg stance, vision, ...)
-      if(experiment_prep_edge_trigger.trigger(mode_selection_switch) 
-          && mode_selection_switch == SWITCH_DOWN) {
-        initial_mode_go_switch = mode_go_switch;
-      }
-      // backflip
-      if(mode_selection_switch == SWITCH_MIDDLE) {
-        selected_mode = RC_mode::BACKFLIP_PRE;
-        if(mode_go_switch == SWITCH_DOWN && initial_mode_go_switch != SWITCH_DOWN) {
-          selected_mode = RC_mode::BACKFLIP;
-        } else if(mode_go_switch == SWITCH_UP) {
-          initial_mode_go_switch = SWITCH_UP;
-        }
-      } // Experiment Mode
-      else if(mode_selection_switch == SWITCH_DOWN){
-        int mode_id = left_select * 3 + right_select;
-        if(mode_id == 0){ // Two leg stance
-          selected_mode = RC_mode::TWO_LEG_STANCE_PRE;
-          if(mode_go_switch == SWITCH_DOWN && initial_mode_go_switch != SWITCH_DOWN) {
-            selected_mode = RC_mode::TWO_LEG_STANCE;
-          } else if(mode_go_switch == SWITCH_UP) {
-            initial_mode_go_switch = SWITCH_UP;
-          }
-        }
-        else if(mode_id == 1){ // Vision 
-          selected_mode = RC_mode::VISION;
-        }
-      }
-      // gait selection
-      int mode_id = left_select * 3 + right_select;
-      constexpr int gait_table[9] = {0, //stand
-        0, // trot
-        1, // bounding
-        2, // pronking
-        3, // gallop
-        5, // trot run
-        6, // walk};
-        7, // walk2?
-        8, // pace
-  };
-*/
-
-void *v_memcpy(void *dest, volatile void *src, size_t n) {
-  void *src_2 = (void *)src;
-  return memcpy(dest, src_2, n);
-}
-
-
-float deadband(float command, float deadbandRegion, float minVal, float maxVal){
-  if (command < deadbandRegion && command > -deadbandRegion) {
-    return 0.0;
+RobotInterface::RobotInterface(RobotType robotType, Graphics3D *gfx,
+                               PeriodicTaskManager *tm, ControlParameters& userParameters)
+    : PeriodicTask(tm, ROBOT_INTERFACE_UPDATE_PERIOD, "robot-interface"),
+      _lcm(getLcmUrl(255)),
+      _userParameters(userParameters) {
+  _parameter_request_lcmt.requestNumber = 0;
+  _gfx = gfx;
+  _robotType = robotType;
+  printf("[RobotInterface] Load parameters...\n");
+  if (_robotType == RobotType::MINI_CHEETAH) {
+    _controlParameters.initializeFromYamlFile(getConfigDirectoryPath() +
+                                              MINI_CHEETAH_DEFAULT_PARAMETERS);
+  } else if (_robotType == RobotType::CHEETAH_3) {
+    _controlParameters.initializeFromYamlFile(getConfigDirectoryPath() +
+                                              CHEETAH_3_DEFAULT_PARAMETERS);
   } else {
-    return (command / (2)) * (maxVal - minVal);
+    assert(false);
+  }
+
+  if (!_controlParameters.isFullyInitialized()) {
+    printf("Not all robot control parameters were initialized. Missing:\n%s\n",
+           _controlParameters.generateUnitializedList().c_str());
+    throw std::runtime_error("not all parameters initialized from ini file");
+  }
+  printf("[RobotInterface] Init LCM\n");
+  printf("[RobotInterface] Init graphics\n");
+  Vec4<float> robotColor;
+  robotColor << 0.6, 0.2, 0.2, 1.0;
+  _robotID = _robotType == RobotType::MINI_CHEETAH ? gfx->setupMiniCheetah(robotColor, true, false)
+                                                   : gfx->setupCheetah3(robotColor, true, false);
+  printf("draw list has %lu items\n", _gfx->_drawList._kinematicXform.size());
+  _gfx->_drawList._visualizationData = &_visualizationData;
+  Checkerboard checker(10, 10, 10, 10);
+  uint64_t floorID = _gfx->_drawList.addCheckerboard(checker, true);
+  _gfx->_drawList.updateCheckerboard(0, floorID);
+  _gfx->_drawList.buildDrawList();
+
+  _lcm.subscribe("interface_response", &RobotInterface::handleControlParameter,
+                 this);
+  _lcm.subscribe("main_cheetah_visualization",
+                 &RobotInterface::handleVisualizationData, this);
+
+  printf("[RobotInterface] Init dynamics\n");
+  _quadruped = robotType == RobotType::MINI_CHEETAH ? buildMiniCheetah<double>()
+                                                    : buildCheetah3<double>();
+  _model = _quadruped.buildModel();
+  _simulator = new DynamicsSimulator<double>(_model, false);
+  DVec<double> zero12(12);
+  for (u32 i = 0; i < 12; i++) {
+    zero12[i] = 0.;
+  }
+
+  _fwdKinState.q = zero12;
+  _fwdKinState.qd = zero12;
+}
+
+void RobotInterface::handleVisualizationData(
+    const lcm::ReceiveBuffer *rbuf, const std::string &chan,
+    const cheetah_visualization_lcmt *msg) {
+  (void)rbuf;
+  (void)chan;
+  for (int i = 0; i < 3; i++) {
+    _fwdKinState.bodyPosition[i] = msg->x[i];
+  }
+
+  for (int i = 0; i < 4; i++) {
+    _fwdKinState.bodyOrientation[i] = msg->quat[i];
+  }
+
+  for (int i = 0; i < 12; i++) {
+    _fwdKinState.q[i] = msg->q[i];
+  }
+
+  _simulator->setState(_fwdKinState);
+  _simulator->forwardKinematics();
+}
+
+void RobotInterface::run() {
+  if (_gfx) {
+    _gfx->_drawList.updateRobotFromModel(*_simulator, _robotID, true);
+    _gfx->update();
+    _gfx->getDriverCommand().get(&_gamepad_lcmt);
+    _lcm.publish(INTERFACE_LCM_NAME, &_gamepad_lcmt);
+  }
+}
+
+using namespace std::chrono_literals;
+
+void RobotInterface::sendControlParameter(const std::string &name,
+                                          ControlParameterValue value,
+                                          ControlParameterValueKind kind, bool isUser) {
+  if (_pendingControlParameterSend) {
+    printf(
+        "[ERROR] trying to send control parameter while a send is in progress, "
+        "ignoring!\n");
+    return;
+  }
+  _pendingControlParameterSend = true;
+  for (int iteration = 0; iteration < TIMES_TO_RESEND_CONTROL_PARAM;) {
+    // new message
+    _parameter_request_lcmt.requestNumber++;
+
+    // message data
+    _parameter_request_lcmt.requestKind = isUser ?
+        (s8)ControlParameterRequestKind::SET_USER_PARAM_BY_NAME : (s8)ControlParameterRequestKind::SET_ROBOT_PARAM_BY_NAME;
+    strcpy((char *)_parameter_request_lcmt.name, name.c_str());
+    memcpy(_parameter_request_lcmt.value, &value, sizeof(value));
+    _parameter_request_lcmt.parameterKind = (s8)kind;
+    printf("set %s to %s (%d)\n", name.c_str(),
+           controlParameterValueToString(value, kind).c_str(), iteration);
+
+    // send
+    _lcm.publish("interface_request", &_parameter_request_lcmt);
+
+    // wait for response with timeout
+    _waitingForLcmResponse = true;
+    _lcmResponseBad = true;
+    std::unique_lock<std::mutex> lock(_lcmMutex);
+
+    if (_lcmCV.wait_for(lock, 100ms) == std::cv_status::no_timeout) {
+      _waitingForLcmResponse = false;
+      // check it
+      if (_waitingForLcmResponse || _lcmResponseBad) {
+        printf(
+            "[RobotInterface] Failed to send parameter %s (iter %d) "
+            "wakeup %d bad? %d\n",
+            name.c_str(), iteration, _waitingForLcmResponse, _lcmResponseBad);
+        usleep(100000);  // sleep a bit to let other bad sends happen
+      } else {
+        iteration++;
+      }
+    } else {
+      _waitingForLcmResponse = false;
+      // fail!
+      printf(
+          "[RobotInterface] Failed to send parameter %s (iter %d timed out), "
+          "trying again...\n",
+          name.c_str(), iteration);
+      usleep(100000);  // sleep a bit to let other bad sends happen
+    }
+  }
+  _pendingControlParameterSend = false;
+}
+
+void RobotInterface::handleControlParameter(
+    const lcm::ReceiveBuffer *rbuf, const std::string &chan,
+    const control_parameter_respones_lcmt *msg) {
+  (void)rbuf;
+  (void)chan;
+  if (!_waitingForLcmResponse) {
+    printf(
+        "[RobotInterface] Got a control parameter response when we weren't "
+        "expecting one, ignoring it!\n");
+    _lcmResponseBad = true;
+    return;
+  }
+
+  // got a real response, let's check it
+  if (msg->requestNumber == _parameter_request_lcmt.requestNumber &&
+      msg->parameterKind == _parameter_request_lcmt.parameterKind &&
+      std::string((char *)msg->name) == (char *)_parameter_request_lcmt.name) {
+    _lcmResponseBad = false;
+    std::unique_lock<std::mutex> lock(_lcmMutex);
+    _waitingForLcmResponse = false;
+    _lcmCV.notify_all();
+  }
+}
+
+void RobotInterface::startInterface() {
+  _running = true;
+  this->start();
+  _lcmThread = std::thread(&RobotInterface::lcmHandler, this);
+  printf("[RobotInterface] Send parameters to robot...\n");
+  for (auto &kv : _controlParameters.collection._map) {
+    sendControlParameter(kv.first, kv.second->get(kv.second->_kind),
+                         kv.second->_kind, false);
+  }
+
+  for (auto &kv : _userParameters.collection._map) {
+    sendControlParameter(kv.first, kv.second->get(kv.second->_kind),
+                         kv.second->_kind, true);
+  }
+  
+}
+
+void RobotInterface::stopInterface() {
+  printf("stopInterface\n");
+  _running = false;
+  _taskManager.stopAll();
+  printf("stopall done\n");
+  _lcmThread.join();
+  printf("lcmthread joined\n");
+}
+
+void RobotInterface::lcmHandler() {
+  while (_running) {
+    _lcm.handleTimeout(1000);
   }
 }

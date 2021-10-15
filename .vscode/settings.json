@@ -63,7 +63,9 @@
         "thread": "cpp",
         "cfenv": "cpp",
         "cinttypes": "cpp",
-        "bit": "cpp"
+        "bit": "cpp",
+        "strstream": "cpp",
+        "typeindex": "cpp"
     },
     "cmake.configureOnOpen": false
 }

@@ -148,6 +148,7 @@ void RobotRunner::run() {
     for (int joint = 0; joint < 3; joint++) {
       cheetahMainVisualization->q[leg * 3 + joint] =
         _legController->datas[leg].q[joint];
+      //std::cout<<"LEG: "<<leg<<" Joint: "<<joint<<" Q: "<<_legController->datas[leg].q[joint]<<std::endl;
     }
   }
   cheetahMainVisualization->p.setZero();
@@ -155,6 +156,15 @@ void RobotRunner::run() {
   cheetahMainVisualization->quat = _stateEstimate.orientation;
 
   // Sets the leg controller commands for the robot appropriate commands
+  
+  if(count_ini%100 ==0)   
+  {
+    
+    std::cout<<"VPERED: "<<(_stateEstimate.position[0])<<"  "<<"VBOK: "<<(_stateEstimate.position[1])<<"  "<<"VISOTA: "<<(_stateEstimate.position[2])<<std::endl;
+    std::cout<<"KPEH: "<<ori::rad2deg(ori::quatToRPY(_stateEstimate.orientation)[0])<<"  "<<"TAHrA}|{}: "<<ori::rad2deg(ori::quatToRPY(_stateEstimate.orientation)[1])<<"  "<<"Pb|CK: "<<ori::rad2deg(ori::quatToRPY(_stateEstimate.orientation)[2])<<std::endl;
+    std::cout<<"=========================="<<std::endl;
+    
+  }
   finalizeStep();
 }
 

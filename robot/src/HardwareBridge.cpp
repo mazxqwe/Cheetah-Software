@@ -15,6 +15,7 @@
 
 #include "HardwareBridge.h"
 #include "rt/rt_rc_interface.h"
+#include "rt/rt_ros_interface.h"
 #include "rt/rt_spi.h"
 #include "rt/rt_vectornav.h"
 #include "rt/rt_ethercat.h"
@@ -355,6 +356,7 @@ void MiniCheetahHardwareBridge::run() {
 
 
   ROS_thread = new std::thread(&MiniCheetahHardwareBridge::ROS_connect_as_rc, this);
+  ROS_thread->detach();
 
   for (;;) {
     usleep(1000000);
