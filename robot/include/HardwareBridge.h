@@ -100,6 +100,9 @@ class MiniCheetahHardwareBridge : public HardwareBridge {
   void run();
   void runMicrostrain();
   void logMicrostrain();
+
+  void ROS_connect_as_rc();
+  
   void abort(const std::string& reason);
   void abort(const char* reason);
 

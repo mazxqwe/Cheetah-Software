@@ -15,7 +15,7 @@
 
 #include "HardwareBridge.h"
 #include "rt/rt_rc_interface.h"
-#include "rt/rt_ros_interface.h"
+//#include "rt/rt_ros_interface.h"
 #include "rt/rt_spi.h"
 #include "rt/rt_vectornav.h"
 #include "rt/rt_ethercat.h"
