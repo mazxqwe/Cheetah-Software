@@ -9,15 +9,13 @@ The third-party will contain *small* third party libraries that we have modified
 
 ## Dependencies
 
-- ROS Noetic Ninjemys
+- ROS Noetic Ninjemys / ROS2 Galactic
 - Qt 5.10 - https://www.qt.io/download-qt-installer (tested on 5.12.2 - works fine)
-- `openjdk-8-jdk` (install Java JDK First!)
+- `sudo apt install openjdk-8-jdk` (install Java JDK First!)
 - LCM - https://lcm-proj.github.io/ (Please make it sure that you have a java to let lcm compile java-extension together)
 - `sudo apt --fix-broken install`
 - Eigen - http://eigen.tuxfamily.org (Should be build from source not apt install)
-- `mesa-common-dev`
-- `freeglut3-dev`
-- `libblas-dev liblapack-dev`
+- `sudo apt install mesa-common-dev freeglut3-dev libblas-dev liblapack-dev`
 
 ## Build
 To build all code:
