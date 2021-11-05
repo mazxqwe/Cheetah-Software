@@ -16,6 +16,7 @@ The third-party will contain *small* third party libraries that we have modified
 - `sudo apt --fix-broken install`
 - Eigen - http://eigen.tuxfamily.org (Should be build from source not apt install)
 - `sudo apt install mesa-common-dev freeglut3-dev libblas-dev liblapack-dev`
+- Don't forget to `sudo make install` for eigen and lcm
 
 ## Build
 To build all code:
