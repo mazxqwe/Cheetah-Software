@@ -40,8 +40,9 @@ include_directories("../lcm-types/cpp")
 include_directories("/usr/local/include/lcm/")   # lcm includes
 include_directories("../third-party/ParamHandler")
 include_directories(${CMAKE_BINARY_DIR})
-include_directories(${roscpp_INCLUDE_DIRS})
-include_directories(${std_msgs_INCLUDE_DIRS})
+#include_directories(${roscpp_INCLUDE_DIRS})
+include_directories(${rclcpp_INCLUDE_DIRS})
+#include_directories(${std_msgs_INCLUDE_DIRS})
 
 file(GLOB sources "src/*.cpp")
 
@@ -54,22 +55,24 @@ set(OpenGL_GL_PREFERENCE LEGACY)
 find_package(OpenGL REQUIRED)
 include_directories(${OPENGL_INCLUDE_DIR})
 
-find_package(roscpp REQUIRED)
+#ROS - deps
+#find_package(roscpp REQUIRED)
+#find_package(std_msgs REQUIRED)
+
+#include_directories(${roscpp_INCLUDE_DIRS})
+#include_directories(${std_msgs_INCLUDE_DIRS})
+
+#ROS2-deps
+find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 
-include_directories(${roscpp_INCLUDE_DIRS})
+include_directories(${rclcpp_INCLUDE_DIRS})
 include_directories(${std_msgs_INCLUDE_DIRS})
-
-
 
 
 add_executable(sim ${sources} ${tst_hdr_moc})
 target_link_libraries(sim biomimetics pthread lcm inih dynacore_param_handler 
-    Qt5::Widgets Qt5::Core Qt5::Gui Qt5::Gamepad ${QT_LIBRARIES} ${OPENGL_LIBRARIES} ${roscpp_LIBRARIES} ${std_msgs_LIBRARIES})
-
-
-#add_library(Joysticktest src/JoystickTest.cpp)
-#target_link_libraries(Joysticktest ${roscpp_LIBRARIES} ${std_msgs_LIBRARIES})
+    Qt5::Widgets Qt5::Core Qt5::Gui Qt5::Gamepad ${QT_LIBRARIES} ${OPENGL_LIBRARIES} ${rclcpp_LIBRARIES}) #${roscpp_LIBRARIES} ${std_msgs_LIBRARIES})  #TOREMOVE ROS
 
 
 if (CMAKE_SYSTEM_NAME MATCHES Linux)

@@ -5,19 +5,28 @@
 #include <stdio.h>
 #include <rt/rt_sbus.h>
 
-#include "ros/ros.h"
-#include "geometry_msgs/Twist.h"
-#include "std_msgs/Int16.h"
+
+//#include "ros/ros.h"
+//#include "geometry_msgs/Twist.h"
+//#include "std_msgs/Int16.h"
+
+#include "rclcpp/rclcpp.hpp"
+
 
 #include <iostream>
 
 
 static pthread_mutex_t lcm_get_set_mutex =
-PTHREAD_MUTEX_INITIALIZER; /**< mutex to protect gui settings coming over
+PTHREAD_MUTEX_INITIALIZER; 
+
+
+
+/*< mutex to protect gui settings coming over
                              LCM */
 
 // Controller Settings
 rc_control_settings rc_control;
+
 
 /* ------------------------- HANDLERS ------------------------- */
 
@@ -28,6 +37,8 @@ void get_rc_control_settings(void *settings) {
   pthread_mutex_unlock(&lcm_get_set_mutex);
 }
 
+
+/*
 
 void ROS_controll_mode_Callback(const std_msgs::Int16::ConstPtr& mode)
 { 
@@ -52,9 +63,12 @@ void ROS_param_Callback(const std_msgs::Int16::ConstPtr& param)
   std::cout<<param<<"LCM"<<std::endl;
 }
 
-
+*/
 void ROS_command_sub()
 {
+  std::cout<<"ROS_command_sub() called\n"<<std::endl;
+}
+  /*
 
   int a = 0;
   char * b =nullptr;
@@ -78,6 +92,7 @@ void ROS_command_sub()
 
   ros::waitForShutdown();
 }
+*/
 
 
 /*

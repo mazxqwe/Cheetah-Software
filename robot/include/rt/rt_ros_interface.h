@@ -3,6 +3,7 @@
  * @brief Interface between simulator and hardware using LCM.
  */
 
+/*
 #ifndef PROJECT_RT_ROS_INTERFACE_H
 #define PROJECT_RT_ROS_INTERFACE_H
 
@@ -86,3 +87,5 @@ class RobotInterface : PeriodicTask {
 };
 
 #endif  // PROJECT_ROBOTINTERFACE_H
+
+*/

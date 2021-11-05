@@ -102,6 +102,7 @@ class MiniCheetahHardwareBridge : public HardwareBridge {
   void logMicrostrain();
   void abort(const std::string& reason);
   void abort(const char* reason);
+  void ROS_connect_as_rc();
 
  private:
   VectorNavData _vectorNavData;

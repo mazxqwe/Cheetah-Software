@@ -51,7 +51,7 @@ else(MINI_CHEETAH_BUILD)
   message("**** Mini-Cheetah build disabled ****")
 endif(MINI_CHEETAH_BUILD)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 
 #find_package(lcm)
 

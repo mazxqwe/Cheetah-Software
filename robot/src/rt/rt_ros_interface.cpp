@@ -1,3 +1,4 @@
+/*
 #include "RobotInterface.h"
 #include <ControlParameters/ControlParameterInterface.h>
 #include <Dynamics/Cheetah3.h>
@@ -204,3 +205,4 @@ void RobotInterface::lcmHandler() {
     _lcm.handleTimeout(1000);
   }
 }
+*/

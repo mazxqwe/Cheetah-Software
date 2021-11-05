@@ -1,8 +1,11 @@
-find_package(roscpp REQUIRED)
+
+#find_package(roscpp REQUIRED) #TOREMOVE for ROS2
+find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 
-include_directories(${roscpp_INCLUDE_DIRS})
+#include_directories(${roscpp_INCLUDE_DIRS}) #TOREMOVE for ROS2
+include_directories(${rclcpp_INCLUDE_DIRS})
 include_directories(${std_msgs_INCLUDE_DIRS})
 include_directories(${geometry_msgs_INCLUDE_DIRS})
 
@@ -29,7 +32,7 @@ file(GLOB sources "src/*.cpp" "src/rt/*.c"  "src/rt/*.cpp")
 
 add_library(robot SHARED ${sources})
 
-target_link_libraries(robot biomimetics pthread lcm inih dynacore_param_handler lord_imu soem ${roscpp_LIBRARIES} ${std_msgs_LIBRARIES})
+target_link_libraries(robot biomimetics pthread lcm inih dynacore_param_handler lord_imu soem ${rclcpp_LIBRARIES}) #${roscpp_LIBRARIES} ${std_msgs_LIBRARIES}) #TOREMOVE for ROS2
 if(CMAKE_SYSTEM_NAME MATCHES Linux)
-target_link_libraries(robot libvnc rt)
+target_link_libraries(robot libvnc rt ${rclcpp_LIBRARIES})
 endif()
