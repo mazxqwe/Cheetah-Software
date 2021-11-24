@@ -9,7 +9,7 @@ The third-party will contain *small* third party libraries that we have modified
 
 ## Dependencies
 
-- ROS Noetic Ninjemys
+- ROS Noetic Ninjemys / ROS 2 Foxy Fitzroy (depending on branch)
 - Qt 5.10 - https://www.qt.io/download-qt-installer (tested on 5.12.2 - works fine)
 - `openjdk-8-jdk` (install Java JDK First!)
 - LCM - https://lcm-proj.github.io/ (Please make it sure that you have a java to let lcm compile java-extension together)
