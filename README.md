@@ -51,7 +51,7 @@ s: simulation, r: robot
 
 Install all dependecies first 
 
-- ROS Noetic Ninjemys
+- ROS Noetic Ninjemys / ROS 2 Foxy Fitzroy (depending on branch)
 - `sudo apt --fix-broken install`
 - `openjdk-8-jdk`
 - LCM - https://lcm-proj.github.io/ (Please make it sure that you have a java to let lcm compile java-extension together)
@@ -100,7 +100,7 @@ To use Ipopt, use CMake Ipopt option. Ex) cmake -DIPOPT_OPTION=ON ..
 
 ## ROS integration
 
-Two topics implemented: cmd_vel with standard Twist funtions. Linear.z is for height variations. and rc_mode topic to change state according to the table:
+Two topics implemented: cmd_vel with standard Twist funtions. Linear.z is for height variations. And rc_mode topic to change state according to the table:
 
 OFF = 0; STAND_UP = 2; QP_STAND = 3; BACKFLIP_PRE = 4; BACKFLIP = 5; VISION = 6; LOCOMOTION = 11; RECOVERY_STAND = 12;
 
