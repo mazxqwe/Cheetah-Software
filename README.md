@@ -103,4 +103,5 @@ Two topics implemented: cmd_vel with standard Twist funtions. Linear.z is for he
 
 OFF = 0; STAND_UP = 2; QP_STAND = 3; BACKFLIP_PRE = 4; BACKFLIP = 5; VISION = 6; LOCOMOTION = 11; RECOVERY_STAND = 12;
 
-// Experiment Mode TWO_LEG_STANCE_PRE = 20; TWO_LEG_STANCE = 21;
+// Experiment Mode TWO_LEG_STANCE_PRE = 20; TWO_LEG_STANCE = 21; SALUTE = 22
+to trnsit to ExpModes please use rc_mode 2 -> rc_mode 20/21/22
