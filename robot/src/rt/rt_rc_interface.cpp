@@ -1,3 +1,8 @@
+#include <iostream>
+#include "rclcpp/rclcpp.hpp"
+#include "geometry_msgs/msg/twist.hpp"
+#include "std_msgs/msg/int16.hpp"
+
 #include <pthread.h>
 #include <rt/rt_rc_interface.h>
 #include "Utilities/EdgeTrigger.h"
@@ -5,19 +10,14 @@
 #include <stdio.h>
 #include <rt/rt_sbus.h>
 
-
-//#include "ros/ros.h"
-//#include "geometry_msgs/Twist.h"
-//#include "std_msgs/Int16.h"
-
-#include "rclcpp/rclcpp.hpp"
+using namespace std::chrono_literals;
 
 
 #include <iostream>
 
 
 static pthread_mutex_t lcm_get_set_mutex =
-PTHREAD_MUTEX_INITIALIZER; 
+        PTHREAD_MUTEX_INITIALIZER;
 
 
 
@@ -32,32 +32,29 @@ rc_control_settings rc_control;
 
 // Controller Settings
 void get_rc_control_settings(void *settings) {
-  pthread_mutex_lock(&lcm_get_set_mutex);
-  v_memcpy(settings, &rc_control, sizeof(rc_control_settings));
-  pthread_mutex_unlock(&lcm_get_set_mutex);
+    pthread_mutex_lock(&lcm_get_set_mutex);
+    v_memcpy(settings, &rc_control, sizeof(rc_control_settings));
+    pthread_mutex_unlock(&lcm_get_set_mutex);
 }
 
+void ROS_controll_mode_Callback(const std_msgs::msg::Int16::SharedPtr mode)
+{
+    rc_control.mode = mode->data;
+    std::cout<<"rc_mode:  "<<rc_control.mode<<std::endl;
+}
+
+void ROS_twist_Callback(const geometry_msgs::msg::Twist::SharedPtr vel)
+{
+    rc_control.v_des[0] = vel->linear.x;
+    rc_control.v_des[1] = vel->linear.y;
+    rc_control.omega_des[2] = - vel->angular.z; //to align ROS linear basis
+    rc_control.height_variation = vel->linear.z;
+    rc_control.rpy_des[0] = vel->angular.x;
+    rc_control.rpy_des[1] = vel->angular.y;
+    rc_control.rpy_des[2] = - vel->angular.z; //to align ROS linear basis
+}
 
 /*
-
-void ROS_controll_mode_Callback(const std_msgs::Int16::ConstPtr& mode)
-{ 
-  rc_control.mode = mode->data;
-  std::cout<<"rc_mode:  "<<rc_control.mode<<std::endl;
-}
-
-void ROS_twist_Callback(const geometry_msgs::Twist::ConstPtr& vel)
-{ 
-  rc_control.v_des[0] = vel->linear.x;
-  rc_control.v_des[1] = vel->linear.y;
-  rc_control.omega_des[2] = - vel->angular.z; //to align ROS linear basis
-  rc_control.height_variation = vel->linear.z;
-  rc_control.rpy_des[0] = vel->angular.x;
-  rc_control.rpy_des[1] = vel->angular.y;
-  rc_control.rpy_des[2] = - vel->angular.z; //to align ROS linear basis
-}
-
-
 void ROS_param_Callback(const std_msgs::Int16::ConstPtr& param)
 {
   std::cout<<param<<"LCM"<<std::endl;
@@ -66,31 +63,46 @@ void ROS_param_Callback(const std_msgs::Int16::ConstPtr& param)
 */
 void ROS_command_sub()
 {
-  std::cout<<"ROS_command_sub() called\n"<<std::endl;
+    std::cout<<"ROS_command_sub() called\n"<<std::endl;
+
+    rclcpp::Node::SharedPtr node = nullptr;
+    int a = 0;
+    const char* const* b = nullptr;
+
+    rclcpp::init(a, b);
+    node = rclcpp::Node::make_shared("robodog_sub");
+    // RCLCPP_INFO("Node initialized");
+
+    auto sub_rc_mode = node->create_subscription<std_msgs::msg::Int16>("rc_mode", 100, ROS_controll_mode_Callback);
+    auto subtwist = node->create_subscription<geometry_msgs::msg::Twist>("cmd_vel", 100, ROS_twist_Callback);
+
+    rclcpp::spin(node);
+    rclcpp::shutdown();
+    node = nullptr;
 }
-  /*
+/*
 
-  int a = 0;
-  char * b =nullptr;
-  ros::init(a, &b, "robodog_sub");
+int a = 0;
+char * b =nullptr;
+ros::init(a, &b, "robodog_sub");
 
-  ros::NodeHandle n;
+ros::NodeHandle n;
 
-  ROS_INFO("Node initialized");
+ROS_INFO("Node initialized");
 
-  ros::AsyncSpinner spinner(1);
+ros::AsyncSpinner spinner(1);
 
-  spinner.start();
+spinner.start();
 
-  rc_control.mode = 1;
+rc_control.mode = 1;
 
-  ros::Subscriber sub_rc_mode = n.subscribe("rc_mode", 100, ROS_controll_mode_Callback);
+ros::Subscriber sub_rc_mode = n.subscribe("rc_mode", 100, ROS_controll_mode_Callback);
 
-  ros::Subscriber subt_param = n.subscribe("dog_param", 100, ROS_param_Callback);
+ros::Subscriber subt_param = n.subscribe("dog_param", 100, ROS_param_Callback);
 
-  ros::Subscriber subtwist = n.subscribe("cmd_vel", 100, ROS_twist_Callback);
+ros::Subscriber subtwist = n.subscribe("cmd_vel", 100, ROS_twist_Callback);
 
-  ros::waitForShutdown();
+ros::waitForShutdown();
 }
 */
 
@@ -157,15 +169,15 @@ void ROS_command_sub()
 */
 
 void *v_memcpy(void *dest, volatile void *src, size_t n) {
-  void *src_2 = (void *)src;
-  return memcpy(dest, src_2, n);
+    void *src_2 = (void *)src;
+    return memcpy(dest, src_2, n);
 }
 
 
 float deadband(float command, float deadbandRegion, float minVal, float maxVal){
-  if (command < deadbandRegion && command > -deadbandRegion) {
-    return 0.0;
-  } else {
-    return (command / (2)) * (maxVal - minVal);
-  }
+    if (command < deadbandRegion && command > -deadbandRegion) {
+        return 0.0;
+    } else {
+        return (command / (2)) * (maxVal - minVal);
+    }
 }

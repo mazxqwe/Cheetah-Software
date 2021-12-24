@@ -32,7 +32,7 @@ file(GLOB sources "src/*.cpp" "src/rt/*.c"  "src/rt/*.cpp")
 
 add_library(robot SHARED ${sources})
 
-target_link_libraries(robot biomimetics pthread lcm inih dynacore_param_handler lord_imu soem ${rclcpp_LIBRARIES}) #${roscpp_LIBRARIES} ${std_msgs_LIBRARIES}) #TOREMOVE for ROS2
+target_link_libraries(robot biomimetics pthread lcm inih dynacore_param_handler lord_imu soem ${rclcpp_LIBRARIES} ${std_msgs_LIBRARIES} ${geometry_msgs_LIBRARIES}) #${roscpp_LIBRARIES} ${std_msgs_LIBRARIES}) #TOREMOVE for ROS2
 if(CMAKE_SYSTEM_NAME MATCHES Linux)
 target_link_libraries(robot libvnc rt ${rclcpp_LIBRARIES})
 endif()
